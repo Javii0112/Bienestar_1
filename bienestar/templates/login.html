@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar sesión | Bienestar Campus</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background: linear-gradient(135deg, #cfe9dd, #eef6f3);
+        }
+
+        .login-container {
+            background: white;
+            width: 380px;
+            padding: 35px 30px;
+            border-radius: 14px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2f6f5e;
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            height: 44px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #5aa897;
+        }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 35%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 16px;
+            color: #555;
+        }
+
+        button {
+            width: 100%;
+            height: 46px;
+            background: #5aa897;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #4b9787;
+        }
+
+        .extra {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .extra a {
+            color: #5aa897;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .extra a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-container">
+    <h2>Bienestar Campus 🌿</h2>
+    <p class="subtitle">Inicia sesión para continuar</p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <label>Correo institucional</label>
+        <input type="email" name="email" placeholder="correo@duocuc.cl" required>
+
+        <label>Contraseña</label>
+        <div class="password-wrapper">
+            <input type="password" name="password" id="password" required>
+            <span class="toggle-password" onclick="togglePassword()">👁️</span>
+        </div>
+
+        <button type="submit">Ingresar</button>
+    </form>
+
+    <div class="extra">
+        ¿No tienes cuenta?
+        <a href="{% url 'registro' %}">Regístrate aquí</a>
+    </div>
+</div>
+
+<script>
+    function togglePassword() {
+        const password = document.getElementById("password");
+        password.type = password.type === "password" ? "text" : "password";
+    }
+</script>
+
+</body>
+</html>

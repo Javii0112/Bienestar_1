@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Bienestar Campus{% endblock %}
+
+{% block page_name %}Inicio{% endblock %}
+
+{% block content %}
+
+<!-- ===== BANNER ===== -->
+<div class="banner">
+    <h2>"Cada día es una nueva oportunidad"</h2>
+    <p>Recuerda: tu bienestar es una prioridad 💚</p>
+</div>
+
+<!-- ===== GRID ===== -->
+<div class="grid">
+    <!-- REGISTRO EMOCIÓN -->
+    <div class="card">
+        <h3>🧠 Registro de Emoción</h3>
+
+        <form method="post">
+            {% csrf_token %}
+            <label>Emoción</label>
+            <select name="emocion">
+                <option>Selecciona una emoción</option>
+                <option>Feliz</option>
+                <option>Triste</option>
+                <option>Emocionado/a</option>
+                <option>Angustiado/a</option>
+                <option>Desepcionado/a</option>
+                <option>Extraño/a</option>
+            </select>
+
+            <label>Intensidad (1 a 5)</label>
+            <select name="intensidad">
+                <option>Selecciona intensidad</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+
+            <label>Cuéntanos un poco más!!</label>
+            <textarea name="descripcion" rows="3"></textarea>
+
+            <button>Guardar emoción</button>
+        </form>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="card">
+        <h3>📊 Resumen de Hoy</h3>
+
+        <div class="resumen-item">
+            <span>💪 Ejercicio</span>
+            <span>30 min</span>
+        </div>
+        <div class="resumen-item">
+            <span>💧 Agua</span>
+            <span>6 / 8 vasos</span>
+        </div>
+        <div class="resumen-item">
+            <span>😴 Sueño</span>
+            <span>7.5 hrs</span>
+        </div>
+
+        <a href="{% url 'habitos' %}">
+            <button class="btn-habitos">Registrar más hábitos</button>
+        </a>
+    </div>
+</div>
+
+<!-- ===== ACTIVIDADES ===== -->
+<div class="actividades">
+    <h3>✨ Actividades recomendadas para ti</h3>
+
+    <div class="actividades-grid">
+        <div class="actividad act1">🧘 Meditación<br><small>5 min respiración</small></div>
+        <div class="actividad act2">✍️ Escribe<br><small>Expresa tus ideas</small></div>
+        <div class="actividad act3">🚶 Camina<br><small>15 min al aire libre</small></div>
+    </div>
+</div>
+
+<!-- ===== ACCESOS ===== -->
+<div class="accesos">
+    <a href="{% url 'estadistica' %}" style="text-decoration: none; color: inherit;">
+        <div class="acceso">📊 Ver Estadísticas</div>
+    </a>
+    <a href="{% url 'diario' %}" style="text-decoration: none; color: inherit;">
+        <div class="acceso">📔 Mi Diario</div>
+    </a>
+    <div class="acceso">📚 Recursos</div>
+    <div class="acceso">🏆 Mis Logros</div>
+</div>
+
+{% endblock %}

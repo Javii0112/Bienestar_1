@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Bienestar Campus{% endblock %}</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #baf3f6, #e3ecff);
+            min-height: 100vh;
+            padding-top: 60px;
+        }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background: #006d63;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: rgb(255, 255, 255);
+            z-index: 1000;
+        }
+
+        .menu-btn {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .top-bar a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            margin-right: 30px;
+        }
+
+        /* ===== MENÚ ===== */
+        .dropdown-menu {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 220px;
+            background: #00796b;
+            display: none;
+            flex-direction: column;
+            z-index: 999;
+        }
+
+        .dropdown-menu a {
+            padding: 15px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .dropdown-menu a:hover {
+            background: #005f56;
+        }
+
+        /* ===== CONTENEDOR ===== */
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        /* ===== BANNER ===== */
+        .banner {
+            background: linear-gradient(90deg, #00c6a7, #00b4d8);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* ===== GRID PRINCIPAL ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        h3 {
+            margin-top: 0;
+            color: #006d63;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 12px;
+        }
+
+        select, textarea, input[type="text"], input[type="number"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 12px;
+            border: none;
+            background: #00796b;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #005f56;
+        }
+
+        /* ===== RESUMEN ===== */
+        .resumen-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .btn-habitos {
+            background: #8a2be2;
+            margin-top: 20px;
+        }
+
+        /* ===== ACTIVIDADES ===== */
+        .actividades {
+            margin-top: 40px;
+        }
+
+        .actividades-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .actividad {
+            padding: 20px;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .act1 { background: #e9f7ef; }
+        .act2 { background: #fff4e5; }
+        .act3 { background: #eef4ff; }
+
+        /* ===== ACCESOS ===== */
+        .accesos {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .acceso {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .acceso:hover {
+            background: #e0e0e0;
+        }
+    </style>
+
+        {% block extra_css %}{% endblock %}
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('dropdown');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        }
+    </script>
+</head>
+
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<div class="top-bar">
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div>{% block page_name %}Inicio{% endblock %}</div>
+    <a href="{% url 'logout' %}">Cerrar sesión</a>
+</div>
+
+<!-- ===== MENÚ ===== -->
+<div class="dropdown-menu" id="dropdown">
+    <a href="{% url 'dashboard' %}">Inicio</a>
+    <a href="{% url 'habitos' %}">Registro de Hábitos</a>
+    <a href="{% url 'diario' %}">Mi Diario</a>
+    <a href="{% url 'estadistica' %}">Estadísticas</a>
+    <a href="{% url 'perfil' %}">Mi Perfil</a>
+</div>
+
+<!-- ===== CONTENIDO ===== -->
+<div class="container">
+    {% block content %}
+    <!-- Aquí va el contenido específico de cada página -->
+    {% endblock %}
+</div>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro de Hábitos | Bienestar Campus{% endblock %}
+
+{% block page_name %}Registro de Hábitos{% endblock %}
+
+{% block extra_css %}
+<style>
+.container-habitos {
+    background: white;
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.container-habitos h1 {
+    text-align: center;
+    color: #006d63;
+    margin-top: 0;
+}
+
+.btn-volver {
+    display: block;
+    text-align: center;
+    margin-top: 25px;
+    color: #006d63;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.btn-volver:hover {
+    color: #005f56;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-habitos">
+    <h1>🏃 Registro de Hábitos</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label>Hábito</label>
+        <select name="habito" required>
+            <option value="">Selecciona un hábito</option>
+            {% for h in habitos %}
+                <option value="{{ h.id }}">{{ h.nombre }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Valor (minutos / veces)</label>
+        <input type="number" name="valor" min="1" max="500" required>
+
+        <button type="submit">Guardar hábito</button>
+    </form>
+
+    <a href="{% url 'dashboard' %}" class="btn-volver">⬅ Volver al inicio</a>
+</div>
+
+{% endblock %}

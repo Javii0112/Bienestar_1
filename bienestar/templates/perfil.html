@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Perfil | Bienestar Campus</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            min-height: 100vh;
+            padding-top: 60px;
+        }
+
+        .container {
+            background: white;
+            width: 500px;
+            max-width: 90%;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        h1 {
+            text-align: center;
+            color: #006d63;
+        }
+
+        .item {
+            margin: 15px 0;
+            font-size: 16px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #444;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: #006d63;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>👤 Mi Perfil</h1>
+
+    <div class="item">
+        <span class="label">Usuario:</span>
+        {{ request.user.username }}
+    </div>
+
+    <div class="item">
+        <span class="label">Email:</span>
+        {{ request.user.email }}
+    </div>
+
+    <div class="item">
+        <span class="label">Fecha de registro:</span>
+        {{ request.user.date_joined|date:"d/m/Y" }}
+    </div>
+
+    <a href="{% url 'dashboard' %}">⬅ Volver al inicio</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Diario Personal | Bienestar Campus{% endblock %}
+
+{% block page_name %}Mi Diario Personal{% endblock %}
+
+
+{% block extra_css %}
+<style>
+    /* CONTENEDOR CENTRAL */
+    .container {
+        display: flex;
+        justify-content: center;
+        margin-top: 60px;
+    }
+
+    .card {
+        background: white;
+        width: 650px;
+        padding: 30px;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .card h1 {
+        text-align: center;
+        color: #006d67;
+        margin-bottom: 5px;
+    }
+
+    .card p {
+        text-align: center;
+        color: #555;
+        margin-bottom: 30px;
+    }
+
+    label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    textarea {
+        width: 100%;
+        height: 180px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        padding: 12px;
+        font-size: 14px;
+        resize: none;
+    }
+
+    button {
+        margin-top: 25px;
+        width: 100%;
+        background-color: #006d67;
+        color: white;
+        border: none;
+        padding: 14px;
+        font-size: 16px;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #005a55;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- CONTENIDO -->
+<div class="container">
+    <div class="card">
+        <h1>📓 Mi Diario Personal</h1>
+        <p>Escribe tus pensamientos y reflexiones</p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label>¿Cómo fue tu día hoy?</label>
+            <textarea name="contenido" placeholder="Escribe libremente sobre tus pensamientos, sentimientos, experiencias del día..." required></textarea>
+
+            <button type="submit">Guardar entrada</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
