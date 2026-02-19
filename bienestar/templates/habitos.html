@@ -6,59 +6,376 @@
 
 {% block extra_css %}
 <style>
-.container-habitos {
-    background: white;
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
+
+.habitos-wrapper {
+    max-width: 700px;
+    margin: 40px auto;
 }
 
-.container-habitos h1 {
+/* Hero */
+.habitos-hero {
+    background: linear-gradient(135deg, #006d63 0%, #00c6a7 100%);
+    border-radius: 24px 24px 0 0;
+    padding: 40px 40px 70px;
+    position: relative;
+    overflow: hidden;
+}
+
+.habitos-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 50%;
+}
+
+.habitos-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -30px;
+    width: 250px; height: 250px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+
+.habitos-hero-top {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.habitos-hero-icon-wrap {
+    width: 64px;
+    height: 64px;
+    background: rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    backdrop-filter: blur(8px);
+    flex-shrink: 0;
+}
+
+.habitos-hero-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: white;
+    margin: 0 0 4px;
+}
+
+.habitos-hero-text p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+}
+
+/* Chips de categorías visuales */
+.habitos-chips {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 2;
+}
+
+.chip {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+}
+
+/* Tarjeta principal */
+.habitos-card {
+    background: white;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+    padding: 0 36px 36px;
+    margin-top: -20px;
+    position: relative;
+    z-index: 1;
+}
+
+.habitos-card-inner {
+    padding-top: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #999;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+}
+
+.form-group select,
+.form-group input[type="number"] {
+    padding: 13px 16px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: #333;
+    background: #fafafa;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    appearance: none;
+}
+
+.form-group select:focus,
+.form-group input[type="number"]:focus {
+    outline: none;
+    border-color: #00796b;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0, 121, 107, 0.08);
+}
+
+/* Tips visuales */
+.habitos-tips {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.tip-card {
+    background: #f8fffe;
+    border: 1px solid #e0f5f2;
+    border-radius: 14px;
+    padding: 14px;
     text-align: center;
+}
+
+.tip-card .tip-icon {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.tip-card .tip-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
     color: #006d63;
-    margin-top: 0;
+    font-weight: 500;
+}
+
+.tip-card .tip-desc {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+/* Botones */
+.habitos-actions {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+}
+
+.btn-guardar {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #006d63, #00c6a7);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+    letter-spacing: 0.3px;
+}
+
+.btn-guardar:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 121, 107, 0.3);
+}
+
+.btn-guardar:active {
+    transform: translateY(0);
 }
 
 .btn-volver {
     display: block;
     text-align: center;
-    margin-top: 25px;
-    color: #006d63;
-    font-weight: bold;
+    margin-top: 12px;
+    padding: 13px;
+    background: transparent;
+    border: 1.5px solid #e0e0e0;
+    color: #888;
     text-decoration: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
 }
 
 .btn-volver:hover {
-    color: #005f56;
+    border-color: #00796b;
+    color: #00796b;
+    background: #f0faf9;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 290px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.13);
+    transition: opacity 0.5s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toast.exito {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.toast.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 600px) {
+    .habitos-card-inner {
+        grid-template-columns: 1fr;
+    }
+    .habitos-tips {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<div class="container-habitos">
-    <h1>🏃 Registro de Hábitos</h1>
+<!-- Toast -->
+{% for message in messages %}
+    {% if 'habito' in message.tags %}
+    <div id="toast" class="toast {% if 'success' in message.tags %}exito{% else %}error{% endif %}">
+        {% if 'success' in message.tags %}✅{% else %}❌{% endif %}
+        {{ message }}
+    </div>
+    <script>
+        setTimeout(() => {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 3000);
+    </script>
+    {% endif %}
+{% endfor %}
 
-    <form method="post">
-        {% csrf_token %}
+<div class="habitos-wrapper">
 
-        <label>Hábito</label>
-        <select name="habito" required>
-            <option value="">Selecciona un hábito</option>
-            {% for h in habitos %}
-                <option value="{{ h.id }}">{{ h.nombre }}</option>
-            {% endfor %}
-        </select>
+    <!-- Hero -->
+    <div class="habitos-hero">
+        <div class="habitos-hero-top">
+            <div class="habitos-hero-icon-wrap">🏃</div>
+            <div class="habitos-hero-text">
+                <h1>Registro de Hábitos</h1>
+                <p>Cada pequeño esfuerzo cuenta para tu bienestar</p>
+            </div>
+        </div>
+        <div class="habitos-chips">
+            <span class="chip">💪 Ejercicio</span>
+            <span class="chip">💧 Hidratación</span>
+            <span class="chip">😴 Sueño</span>
+            <span class="chip">🧘 Meditación</span>
+            <span class="chip">📖 Lectura</span>
+        </div>
+    </div>
 
-        <label>Valor (minutos / veces)</label>
-        <input type="number" name="valor" min="1" max="500" required>
+    <!-- Formulario -->
+    <div class="habitos-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="habitos-card-inner">
 
-        <button type="submit">Guardar hábito</button>
-    </form>
+                <div class="form-group full">
+                    <label>¿Qué hábito realizaste hoy?</label>
+                    <select name="habito" required>
+                        <option value="">Selecciona un hábito</option>
+                        {% for h in habitos %}
+                            <option value="{{ h.id }}">{{ h.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <a href="{% url 'dashboard' %}" class="btn-volver">⬅ Volver al inicio</a>
+                <div class="form-group full">
+                    <label>Minutos o veces realizadas</label>
+                    <input type="number" name="valor" min="1" max="500" placeholder="Ej: 30">
+                </div>
+
+                <!-- Tips de referencia -->
+                <div class="habitos-tips">
+                    <div class="tip-card">
+                        <div class="tip-icon">🏃</div>
+                        <div class="tip-label">Ejercicio</div>
+                        <div class="tip-desc">30 min recomendados</div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">💧</div>
+                        <div class="tip-label">Agua</div>
+                        <div class="tip-desc">8 vasos al día</div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">😴</div>
+                        <div class="tip-label">Sueño</div>
+                        <div class="tip-desc">7-9 horas ideales</div>
+                    </div>
+                </div>
+
+                <div class="habitos-actions">
+                    <button type="submit" class="btn-guardar">💾 Guardar hábito</button>
+                    <a href="{% url 'dashboard' %}" class="btn-volver">⬅ Volver al inicio</a>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
 </div>
 
 {% endblock %}

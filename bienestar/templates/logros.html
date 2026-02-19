@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Logros | Bienestar Campus{% endblock %}
+
+{% block page_name %}Mis Logros{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+.logros-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+/* Hero */
+.logros-hero {
+    background: linear-gradient(135deg, #7b2ff7 0%, #f107a3 100%);
+    border-radius: 24px;
+    padding: 36px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logros-hero::before {
+    content: '🏆';
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 90px;
+    opacity: 0.12;
+}
+
+.logros-hero-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    flex-shrink: 0;
+}
+
+.logros-hero-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: white;
+    margin: 0 0 6px;
+}
+
+.logros-hero-text p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+}
+
+/* Stats rápidos */
+.logros-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.logro-stat {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.logro-stat .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: #7b2ff7;
+    display: block;
+}
+
+.logro-stat .stat-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+/* Sección por categoría */
+.logros-seccion {
+    margin-bottom: 32px;
+}
+
+.logros-seccion-titulo {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.logros-seccion-titulo::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #eee;
+}
+
+/* Grid de logros */
+.logros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+/* Tarjeta logro */
+.logro-card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px 18px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    border: 2px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.logro-card.obtenido {
+    border-color: #7b2ff7;
+    background: linear-gradient(135deg, #fdf6ff, #fff);
+}
+
+.logro-card.obtenido::after {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #7b2ff7;
+    background: #f0e0ff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logro-card.bloqueado {
+    opacity: 0.45;
+    filter: grayscale(0.6);
+}
+
+.logro-card:hover:not(.bloqueado) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(123, 47, 247, 0.15);
+}
+
+.logro-icono {
+    font-size: 38px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.logro-nombre {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.logro-desc {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #aaa;
+    line-height: 1.5;
+}
+
+.logro-fecha {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: #7b2ff7;
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+.logro-bloq-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: #ccc;
+    margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+    .logros-stats { grid-template-columns: 1fr 1fr; }
+    .logros-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="logros-wrapper">
+
+    <!-- Hero -->
+    <div class="logros-hero">
+        <div class="logros-hero-icon">🏆</div>
+        <div class="logros-hero-text">
+            <h1>Mis Logros</h1>
+            <p>Cada pequeño paso suma. ¡Sigue adelante!</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="logros-stats">
+        <div class="logro-stat">
+            <span class="stat-num">{{ total_obtenidos }}</span>
+            <div class="stat-label">Logros obtenidos</div>
+        </div>
+        <div class="logro-stat">
+            <span class="stat-num">{{ total_logros }}</span>
+            <div class="stat-label">Logros totales</div>
+        </div>
+        <div class="logro-stat">
+            <span class="stat-num">{{ porcentaje }}%</span>
+            <div class="stat-label">Completado</div>
+        </div>
+    </div>
+
+    <!-- Por categoría -->
+    {% for categoria, datos in logros_por_categoria.items %}
+    <div class="logros-seccion">
+        <div class="logros-seccion-titulo">{{ datos.label }}</div>
+        <div class="logros-grid">
+            {% for item in datos.logros %}
+            <div class="logro-card {% if item.obtenido %}obtenido{% else %}bloqueado{% endif %}">
+                <span class="logro-icono">{{ item.logro.icono }}</span>
+                <div class="logro-nombre">{{ item.logro.descripcion }}</div>
+                {% if item.obtenido %}
+                    <div class="logro-fecha">🗓 {{ item.fecha|date:"d/m/Y" }}</div>
+                {% else %}
+                    <div class="logro-bloq-label">🔒 Por desbloquear</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

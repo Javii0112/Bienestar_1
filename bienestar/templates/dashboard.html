@@ -20,27 +20,29 @@
 
         <form method="post">
             {% csrf_token %}
+
             <label>Emoción</label>
-            <select name="emocion">
-                <option>Selecciona una emoción</option>
-                <option>Feliz</option>
-                <option>Triste</option>
-                <option>Emocionado/a</option>
-                <option>Angustiado/a</option>
-                <option>Desepcionado/a</option>
-                <option>Extraño/a</option>
+            <select name="emocion" required>
+                <option value="">Selecciona una emoción</option>
+                {% for emocion in emociones %}
+                    <option value="{{ emocion.id }}">{{ emocion.nombre }}</option>
+                {% endfor %}
             </select>
 
             <label>Intensidad (1 a 5)</label>
-            <select name="intensidad">
-                <option>Selecciona intensidad</option>
-                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <select name="intensidad" required>
+                <option value="">Selecciona intensidad</option>
+                <option value="1">1 - Muy leve</option>
+                <option value="2">2 - Leve</option>
+                <option value="3">3 - Moderada</option>
+                <option value="4">4 - Intensa</option>
+                <option value="5">5 - Muy intensa</option>
             </select>
 
-            <label>Cuéntanos un poco más!!</label>
-            <textarea name="descripcion" rows="3"></textarea>
+            <label>Cuéntanos un poco más</label>
+            <textarea name="descripcion" rows="3" placeholder="¿Qué está pasando hoy?"></textarea>
 
-            <button>Guardar emoción</button>
+            <button type="submit" name="guardar_emocion" value="1">Guardar emoción</button>
         </form>
     </div>
 
@@ -48,24 +50,54 @@
     <div class="card">
         <h3>📊 Resumen de Hoy</h3>
 
-        <div class="resumen-item">
-            <span>💪 Ejercicio</span>
-            <span>30 min</span>
+        {% if emocion_hoy %}
+            <div class="resumen-item">
+                <span>🧠 Emoción</span>
+                <span>{{ emocion_hoy.emocion.nombre }} (intensidad {{ emocion_hoy.intensidad }}/5)</span>
+            </div>
+        {% else %}
+            <div class="resumen-item">
+                <span>🧠 Emoción</span>
+                <span style="color: #aaa;">Sin registrar aún</span>
+            </div>
+        {% endif %}
+
+        {% if habitos_hoy %}
+            {% for reg in habitos_hoy %}
+            <div class="resumen-item">
+                <span>💪 {{ reg.habito.nombre }}</span>
+                <span>{{ reg.valor }} min</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="resumen-item">
+                <span>💪 Hábitos</span>
+                <span style="color: #aaa;">Sin registrar aún</span>
+            </div>
+        {% endif %}
+
+        {% if todas_emociones %}
+        <button onclick="document.getElementById('historial').style.display = document.getElementById('historial').style.display === 'none' ? 'block' : 'none'"
+            style="margin-top: 12px; background: transparent; border: 1px solid #00796b; color: #00796b; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;">
+            📋 Ver historial de emociones
+        </button>
+
+        <div id="historial" style="display: none; margin-top: 12px;">
+            {% for reg in todas_emociones %}
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
+                <span>{{ reg.emocion.nombre }}</span>
+                <span style="color: #888;">{{ reg.intensidad }}/5 · {{ reg.fecha|date:"d/m H:i" }}</span>
+            </div>
+            {% endfor %}
         </div>
-        <div class="resumen-item">
-            <span>💧 Agua</span>
-            <span>6 / 8 vasos</span>
-        </div>
-        <div class="resumen-item">
-            <span>😴 Sueño</span>
-            <span>7.5 hrs</span>
-        </div>
+        {% endif %}
 
         <a href="{% url 'habitos' %}">
             <button class="btn-habitos">Registrar más hábitos</button>
         </a>
     </div>
-</div>
+
+</div> <!-- cierre div.grid -->
 
 <!-- ===== ACTIVIDADES ===== -->
 <div class="actividades">

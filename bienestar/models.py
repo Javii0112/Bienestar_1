@@ -78,37 +78,13 @@ class Perfil(models.Model):
 
     def __str__(self):
         return f"{self.nombre} {self.apellido}"
-
-
-# ==================================================
-# ESTADO DE ÁNIMO
-# ==================================================
-class EstadoAnimo(models.Model):
-    descripcion = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.descripcion
-
-
-class RegistroEstadoAnimo(models.Model):
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    estado_animo = models.ForeignKey(EstadoAnimo, on_delete=models.CASCADE)
-    fecha = models.DateTimeField(auto_now_add=True)
-
-
+    
 # ==================================================
 # EMOCIÓN
 # ==================================================
-class CategoriaEmocion(models.Model):
-    nombre = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.nombre
-
 
 class Emocion(models.Model):
     nombre = models.CharField(max_length=100)
-    categoria = models.ForeignKey(CategoriaEmocion, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.nombre
@@ -200,3 +176,45 @@ class Diario(models.Model):
 
     def __str__(self):
         return f"{self.usuario} - {self.fecha}"
+    
+# ==================================================
+# LOGROS Y BADGES
+# ==================================================
+
+class Logro(models.Model):
+    CATEGORIAS = [
+        ('emocion', 'Emociones'),
+        ('habito', 'Hábitos'),
+        ('diario', 'Diario'),
+        ('racha', 'Racha'),
+        ('general', 'General'),
+    ]
+
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    icono = models.CharField(max_length=10)          # emoji
+    categoria = models.CharField(max_length=20, choices=CATEGORIAS)
+    condicion_valor = models.IntegerField(default=1) # cuántas veces se requiere
+
+    def __str__(self):
+        return self.nombre
+
+
+class LogroUsuario(models.Model):
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    logro = models.ForeignKey(Logro, on_delete=models.CASCADE)
+    fecha_obtenido = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'logro')  # no duplicar
+
+    def __str__(self):
+        return f"{self.usuario} - {self.logro.nombre}"
+
+
+
+
+
+
+
+

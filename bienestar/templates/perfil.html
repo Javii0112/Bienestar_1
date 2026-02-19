@@ -1,76 +1,416 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Mi Perfil | Bienestar Campus</title>
+{% extends 'base.html' %}
 
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #a8edea, #fed6e3);
-            min-height: 100vh;
-            padding-top: 60px;
-        }
+{% block title %}Mi Perfil | Bienestar Campus{% endblock %}
 
-        .container {
-            background: white;
-            width: 500px;
-            max-width: 90%;
-            margin: 50px auto;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
+{% block page_name %}Mi Perfil{% endblock %}
 
-        h1 {
-            text-align: center;
-            color: #006d63;
-        }
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500&display=swap');
 
-        .item {
-            margin: 15px 0;
-            font-size: 16px;
-        }
+.perfil-wrapper {
+    max-width: 560px;
+    margin: 40px auto;
+}
 
-        .label {
-            font-weight: bold;
-            color: #444;
-        }
+.perfil-hero {
+    background: linear-gradient(135deg, #006d63 0%, #00c6a7 100%);
+    border-radius: 24px 24px 0 0;
+    padding: 40px 30px 60px;
+    text-align: center;
+    position: relative;
+}
 
-        a {
-            display: block;
-            text-align: center;
-            margin-top: 30px;
-            color: #006d63;
-            text-decoration: none;
-            font-weight: bold;
-        }
-    </style>
-</head>
+.avatar-circle {
+    width: 90px;
+    height: 90px;
+    background: rgba(255,255,255,0.2);
+    border: 3px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    margin: 0 auto 16px;
+    backdrop-filter: blur(8px);
+}
 
-<body>
+.perfil-nombre-hero {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    color: white;
+    margin: 0 0 4px;
+}
 
-<div class="container">
-    <h1>👤 Mi Perfil</h1>
+.perfil-email-hero {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+}
 
-    <div class="item">
-        <span class="label">Usuario:</span>
-        {{ request.user.username }}
+.perfil-card {
+    background: white;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+    padding: 0 30px 30px;
+    margin-top: -20px;
+    position: relative;
+    z-index: 1;
+}
+
+.perfil-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 0 0 24px;
+}
+
+.perfil-section-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #00796b;
+    margin: 24px 0 14px;
+}
+
+.perfil-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    background: #f8fffe;
+    transition: background 0.2s;
+}
+
+.perfil-row:hover {
+    background: #e8f8f5;
+}
+
+.perfil-row-icon {
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    flex-shrink: 0;
+}
+
+.perfil-row-content {
+    flex: 1;
+}
+
+.perfil-row-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #999;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 2px;
+}
+
+.perfil-row-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: #333;
+}
+
+/* Formulario de edición */
+.edit-form {
+    display: none;
+    margin-top: 20px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 20px;
+}
+
+.edit-form.activo {
+    display: block;
+}
+
+.edit-form label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #999;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: block;
+    margin-bottom: 5px;
+    margin-top: 14px;
+}
+
+.edit-form input,
+.edit-form select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.edit-form input:focus,
+.edit-form select:focus {
+    outline: none;
+    border-color: #00796b;
+    background: white;
+}
+
+.btn-editar {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1.5px solid #00796b;
+    color: #00796b;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: all 0.2s;
+}
+
+.btn-editar:hover {
+    background: #e8f8f5;
+}
+
+.btn-guardar {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #006d63, #00c6a7);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-guardar:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-cancelar {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 6px;
+}
+
+.btn-cancelar:hover {
+    color: #888;
+}
+
+.btn-volver {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    padding: 13px;
+    background: linear-gradient(135deg, #006d63, #00c6a7);
+    color: white;
+    text-decoration: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-volver:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 280px;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    transition: opacity 0.5s;
+}
+
+.toast.exito {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.toast.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Toast de mensajes -->
+{% if messages %}
+    {% for message in messages %}
+    <div id="toast" class="toast {% if message.tags == 'success' %}exito{% else %}error{% endif %}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    <script>
+        setTimeout(() => {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 3000);
+    </script>
+{% endif %}
+
+<div class="perfil-wrapper">
+
+    <!-- Hero -->
+    <div class="perfil-hero">
+        <div class="avatar-circle">👤</div>
+        <p class="perfil-nombre-hero">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+        <p class="perfil-email-hero">{{ request.user.email }}</p>
     </div>
 
-    <div class="item">
-        <span class="label">Email:</span>
-        {{ request.user.email }}
+    <!-- Tarjeta -->
+    <div class="perfil-card">
+        <div class="perfil-divider"></div>
+
+        <!-- Datos actuales -->
+        <div class="perfil-section-title">Información personal</div>
+
+        <div class="perfil-row">
+            <div class="perfil-row-icon">🙋</div>
+            <div class="perfil-row-content">
+                <div class="perfil-row-label">Nombre</div>
+                <div class="perfil-row-value">{{ perfil.nombre }}</div>
+            </div>
+        </div>
+
+        <div class="perfil-row">
+            <div class="perfil-row-icon">👤</div>
+            <div class="perfil-row-content">
+                <div class="perfil-row-label">Apellido</div>
+                <div class="perfil-row-value">{{ perfil.apellido }}</div>
+            </div>
+        </div>
+
+        <div class="perfil-row">
+            <div class="perfil-row-icon">🎂</div>
+            <div class="perfil-row-content">
+                <div class="perfil-row-label">Fecha de nacimiento</div>
+                <div class="perfil-row-value">
+                    {% if perfil.fecha_nacimiento %}
+                        {{ perfil.fecha_nacimiento|date:"d/m/Y" }}
+                    {% else %}
+                        <span style="color:#aaa;">No registrada</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="perfil-row">
+            <div class="perfil-row-icon">⚧</div>
+            <div class="perfil-row-content">
+                <div class="perfil-row-label">Género</div>
+                <div class="perfil-row-value">
+                    {% if perfil.genero == "F" %}Femenino
+                    {% elif perfil.genero == "M" %}Masculino
+                    {% elif perfil.genero == "O" %}Otro
+                    {% else %}{{ perfil.genero }}{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="perfil-section-title">Cuenta</div>
+
+        <div class="perfil-row">
+            <div class="perfil-row-icon">✉️</div>
+            <div class="perfil-row-content">
+                <div class="perfil-row-label">Email</div>
+                <div class="perfil-row-value">{{ request.user.email }}</div>
+            </div>
+        </div>
+
+        <div class="perfil-row">
+            <div class="perfil-row-icon">📅</div>
+            <div class="perfil-row-content">
+                <div class="perfil-row-label">Miembro desde</div>
+                <div class="perfil-row-value">{{ request.user.date_joined|date:"d \de F \de Y" }}</div>
+            </div>
+        </div>
+
+        <!-- Botón para abrir formulario -->
+        <button class="btn-editar" id="btnEditar" onclick="toggleEditar()">✏️ Editar perfil</button>
+
+        <!-- Formulario de edición -->
+        <div class="edit-form" id="editForm">
+            <form method="post">
+                {% csrf_token %}
+
+                <label>Nombre</label>
+                <input type="text" name="nombre" value="{{ perfil.nombre }}" required>
+
+                <label>Apellido</label>
+                <input type="text" name="apellido" value="{{ perfil.apellido }}" required>
+
+                <label>Fecha de nacimiento</label>
+                <input type="date" name="fecha_nacimiento" value="{{ perfil.fecha_nacimiento|date:'Y-m-d' }}">
+
+                <label>Género</label>
+                <select name="genero">
+                    <option value="F" {% if perfil.genero == "F" %}selected{% endif %}>Femenino</option>
+                    <option value="M" {% if perfil.genero == "M" %}selected{% endif %}>Masculino</option>
+                    <option value="O" {% if perfil.genero == "O" %}selected{% endif %}>Otro</option>
+                </select>
+
+                <button type="submit" class="btn-guardar">💾 Guardar cambios</button>
+                <button type="button" class="btn-cancelar" onclick="toggleEditar()">Cancelar</button>
+            </form>
+        </div>
+
+        <a href="{% url 'dashboard' %}" class="btn-volver">⬅ Volver al inicio</a>
     </div>
 
-    <div class="item">
-        <span class="label">Fecha de registro:</span>
-        {{ request.user.date_joined|date:"d/m/Y" }}
-    </div>
-
-    <a href="{% url 'dashboard' %}">⬅ Volver al inicio</a>
 </div>
 
-</body>
-</html>
+<script>
+function toggleEditar() {
+    const form = document.getElementById('editForm');
+    const btn = document.getElementById('btnEditar');
+    form.classList.toggle('activo');
+    btn.style.display = form.classList.contains('activo') ? 'none' : 'block';
+}
+</script>
+
+{% endblock %}

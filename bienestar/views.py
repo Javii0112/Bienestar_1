@@ -6,17 +6,34 @@ from .models import Perfil
 from datetime import date
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
 import re
 from .models import (
     Habito,
     RegistroEmocion,
     RegistroHabito,
     Diario,
-    Emocion
+    Emocion,
+    Logro,
+    LogroUsuario,
 )
+from .utils import verificar_logros
 
 User = get_user_model()
 
+
+def guardar_logros_sesion(request, nuevos_logros):
+    """Guarda los logros nuevos en la sesión para mostrar la animación."""
+    if nuevos_logros:
+        request.session['nuevos_logros'] = [
+            {'nombre': l.descripcion, 'icono': l.icono} for l in nuevos_logros
+        ]
+
+
+# ==================================================
+# REGISTRO
+# ==================================================
 def registro_view(request):
     if request.method == "POST":
         nombre = request.POST.get("nombre")
@@ -27,7 +44,6 @@ def registro_view(request):
         genero = request.POST.get("genero")
         fecha_nacimiento = request.POST.get("fecha_nacimiento")
 
-        # Validaciones
         if not email.endswith("@duocuc.cl"):
             messages.error(request, "Debes usar tu correo institucional @duocuc.cl")
             return render(request, "registro.html", locals())
@@ -77,7 +93,6 @@ def registro_view(request):
             messages.error(request, "Debes ser mayor de 18 años")
             return render(request, "registro.html", locals())
 
-        # Crear usuario
         user = User.objects.create_user(
             email=email,
             password=password1,
@@ -87,16 +102,21 @@ def registro_view(request):
 
         Perfil.objects.create(
             usuario=user,
+            nombre=nombre,
+            apellido=apellido,
             genero=genero,
             fecha_nacimiento=fecha_nac
         )
 
-        login(request, user)
         messages.success(request, "Usuario registrado correctamente")
         return redirect("login")
 
     return render(request, "registro.html")
 
+
+# ==================================================
+# LOGIN
+# ==================================================
 def login_view(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -112,58 +132,70 @@ def login_view(request):
 
     return render(request, "login.html")
 
+
+# ==================================================
+# DASHBOARD
+# ==================================================
 @login_required
 def dashboard_view(request):
-    # Obtener emociones desde la BD (o usar datos de ejemplo si no tienes BD)
     emociones = Emocion.objects.all()
-    
-    # Si no tienes BD aún, usa esto temporalmente:
-    # emociones = [
-    #     {'id': 1, 'nombre': 'Feliz'},
-    #     {'id': 2, 'nombre': 'Triste'},
-    #     {'id': 3, 'nombre': 'Emocionado/a'},
-    #     {'id': 4, 'nombre': 'Angustiado/a'},
-    #     {'id': 5, 'nombre': 'Decepcionado/a'},
-    #     {'id': 6, 'nombre': 'Extraño/a'},
-    # ]
 
     if request.method == "POST":
-        # ===============================
-        # GUARDAR EMOCIÓN
-        # ===============================
-        if "guardar_emocion" in request.POST:
-            emocion_id = request.POST.get("emocion")
-            intensidad = request.POST.get("intensidad")
-            comentario = request.POST.get("comentario", "")
+        emocion_id = request.POST.get("emocion")
+        intensidad = request.POST.get("intensidad")
+        descripcion = request.POST.get("descripcion", "")
 
-            # Validaciones
-            if not emocion_id or emocion_id == "":
-                messages.error(request, "Por favor selecciona una emoción")
-            elif not intensidad or intensidad == "":
-                messages.error(request, "Por favor selecciona una intensidad")
-            else:
-                try:
-                    # Descomentar cuando tengas BD lista:
-                    RegistroEmocion.objects.create(
-                        usuario=request.user,
-                        emocion_id=int(emocion_id),
-                        intensidad=int(intensidad),
-                        comentario=comentario
-                    )
-                    messages.success(request, "¡Emoción registrada exitosamente! 💚")
-                    
-                    # Para modo demo sin BD:
-                    # messages.info(request, "Modo demo - La emoción no se guardó (sin BD)")
-                    
-                except Exception as e:
-                    messages.error(request, f"Error al guardar: {str(e)}")
+        if not emocion_id:
+            messages.error(request, "Por favor selecciona una emoción")
+        elif not intensidad:
+            messages.error(request, "Por favor selecciona una intensidad")
+        else:
+            try:
+                RegistroEmocion.objects.create(
+                    usuario=request.user,
+                    emocion_id=int(emocion_id),
+                    intensidad=int(intensidad),
+                    comentario=descripcion
+                )
+                # Verificar logros
+                nuevos_logros = verificar_logros(request.user)
+                guardar_logros_sesion(request, nuevos_logros)
 
-            return redirect("dashboard")
+                messages.success(request, "¡Emoción registrada exitosamente! 💚")
+            except Exception as e:
+                messages.error(request, f"Error al guardar: {str(e)}")
+
+        return redirect("dashboard")
+
+    # Última emoción registrada hoy
+    hoy = date.today()
+    emocion_hoy = RegistroEmocion.objects.filter(
+        usuario=request.user,
+        fecha__date=hoy
+    ).select_related('emocion').last()
+
+    # Todas las emociones registradas (para el historial)
+    todas_emociones = RegistroEmocion.objects.filter(
+        usuario=request.user
+    ).select_related('emocion').order_by('-fecha')[:20]
+
+    # Hábitos registrados hoy
+    habitos_hoy = RegistroHabito.objects.filter(
+        usuario=request.user,
+        fecha=hoy
+    ).select_related('habito').order_by('-id')
 
     return render(request, "dashboard.html", {
         "emociones": emociones,
+        "emocion_hoy": emocion_hoy,
+        "todas_emociones": todas_emociones,
+        "habitos_hoy": habitos_hoy,
     })
 
+
+# ==================================================
+# HÁBITOS
+# ==================================================
 @login_required
 def registro_habitos(request):
     habitos = Habito.objects.all()
@@ -182,23 +214,88 @@ def registro_habitos(request):
                     fecha=date.today(),
                     valor=int(valor)
                 )
+                # Verificar logros
+                nuevos_logros = verificar_logros(request.user)
+                guardar_logros_sesion(request, nuevos_logros)
 
-        return redirect("registro_habitos")
+                messages.success(request, "¡Hábito registrado! 💪", extra_tags='habito')
+
+        return redirect("habitos")
 
     return render(request, "habitos.html", {
         "habitos": habitos
     })
 
+
+# ==================================================
+# ESTADÍSTICAS
+# ==================================================
 @login_required
 def estadistica_view(request):
-    return render(request, "estadistica.html")
+    from datetime import timedelta
+    from django.db.models import Avg, Count
+
+    hoy = date.today()
+    dias_semana = [(hoy - timedelta(days=i)) for i in range(6, -1, -1)]
+
+    registros_semana = RegistroEmocion.objects.filter(
+        usuario=request.user,
+        fecha__date__in=dias_semana
+    ).select_related('emocion')
+
+    datos_por_dia = {}
+    for r in registros_semana:
+        dia = r.fecha.date()
+        if dia not in datos_por_dia:
+            datos_por_dia[dia] = []
+        datos_por_dia[dia].append(r.intensidad)
+
+    nombres_dias = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+    grafico_semana = []
+    for i, dia in enumerate(dias_semana):
+        intensidades = datos_por_dia.get(dia, [])
+        promedio = round(sum(intensidades) / len(intensidades), 1) if intensidades else 0
+        altura = int(promedio * 40)
+        grafico_semana.append({
+            "label": nombres_dias[dia.weekday()],
+            "altura": altura,
+            "promedio": promedio,
+        })
+
+    todos_registros = RegistroEmocion.objects.filter(usuario=request.user)
+    total_registros = todos_registros.count()
+
+    intensidad_promedio = todos_registros.aggregate(Avg('intensidad'))['intensidad__avg']
+    intensidad_promedio = round(intensidad_promedio, 1) if intensidad_promedio else 0
+
+    emocion_frecuente = (
+        todos_registros
+        .values('emocion__nombre')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+        .first()
+    )
+    emocion_frecuente_nombre = emocion_frecuente['emocion__nombre'] if emocion_frecuente else "Sin datos"
+
+    return render(request, "estadistica.html", {
+        "grafico_semana": grafico_semana,
+        "total_registros": total_registros,
+        "intensidad_promedio": intensidad_promedio,
+        "emocion_frecuente": emocion_frecuente_nombre,
+    })
 
 
+# ==================================================
+# RECURSOS
+# ==================================================
 @login_required
 def recursos_view(request):
     return render(request, "recursos.html")
 
 
+# ==================================================
+# DIARIO
+# ==================================================
 @login_required
 def diario(request):
     if request.method == 'POST':
@@ -209,21 +306,111 @@ def diario(request):
                 usuario=request.user,
                 contenido=texto
             )
-            return redirect('diario')  # vuelve al diario
+            # Verificar logros
+            nuevos_logros = verificar_logros(request.user)
+            guardar_logros_sesion(request, nuevos_logros)
 
-    return render(request, 'diario.html')
+            messages.success(request, "¡Entrada guardada en tu diario! 📓", extra_tags='diario')
+            return redirect('diario')
+
+    entradas = Diario.objects.filter(usuario=request.user).order_by('-fecha')
+    return render(request, 'diario.html', {"entradas": entradas})
 
 
+# ==================================================
+# PERFIL
+# ==================================================
 @login_required
 def perfil(request):
-    return render(request, 'perfil.html')
+    perfil_obj = Perfil.objects.get(usuario=request.user)
 
-#api rest
+    if request.method == "POST":
+        nombre = request.POST.get("nombre", "").strip()
+        apellido = request.POST.get("apellido", "").strip()
+        fecha_nacimiento = request.POST.get("fecha_nacimiento", "")
+        genero = request.POST.get("genero", "")
+
+        if not nombre or not apellido:
+            messages.error(request, "Nombre y apellido son obligatorios", extra_tags='perfil')
+        else:
+            perfil_obj.nombre = nombre
+            perfil_obj.apellido = apellido
+            perfil_obj.genero = genero
+            if fecha_nacimiento:
+                try:
+                    perfil_obj.fecha_nacimiento = date.fromisoformat(fecha_nacimiento)
+                except ValueError:
+                    messages.error(request, "Fecha de nacimiento inválida", extra_tags='perfil')
+                    return render(request, "perfil.html", {"perfil": perfil_obj})
+            perfil_obj.save()
+
+            request.user.first_name = nombre
+            request.user.last_name = apellido
+            request.user.save()
+
+            messages.success(request, "¡Perfil actualizado correctamente! ✅", extra_tags='perfil')
+            return redirect("perfil")
+
+    return render(request, "perfil.html", {"perfil": perfil_obj})
+
+
+# ==================================================
+# LOGROS
+# ==================================================
+@login_required
+def logros_view(request):
+    todos = Logro.objects.all()
+    obtenidos = LogroUsuario.objects.filter(
+        usuario=request.user
+    ).select_related('logro')
+
+    obtenidos_ids = {lu.logro.id: lu.fecha_obtenido for lu in obtenidos}
+
+    categorias = {
+        'emocion': {'label': '🧠 Emociones', 'logros': []},
+        'habito':  {'label': '💪 Hábitos',   'logros': []},
+        'diario':  {'label': '📓 Diario',     'logros': []},
+        'racha':   {'label': '🔥 Rachas',     'logros': []},
+        'general': {'label': '⭐ General',    'logros': []},
+    }
+
+    for logro in todos:
+        cat = logro.categoria if logro.categoria in categorias else 'general'
+        categorias[cat]['logros'].append({
+            'logro': logro,
+            'obtenido': logro.id in obtenidos_ids,
+            'fecha': obtenidos_ids.get(logro.id),
+        })
+
+    total_logros    = todos.count()
+    total_obtenidos = len(obtenidos_ids)
+    porcentaje = round((total_obtenidos / total_logros * 100) if total_logros else 0)
+
+    return render(request, 'logros.html', {
+        'logros_por_categoria': categorias,
+        'total_logros': total_logros,
+        'total_obtenidos': total_obtenidos,
+        'porcentaje': porcentaje,
+    })
+
+
+# ==================================================
+# LIMPIAR LOGROS SESIÓN (llamado por JS)
+# ==================================================
+@require_POST
+def limpiar_logros_sesion(request):
+    request.session.pop('nuevos_logros', None)
+    return JsonResponse({'ok': True})
+
+
+# ==================================================
+# API REST
+# ==================================================
 from rest_framework import viewsets
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import EmocionSerializer, RegistroEmocionSerializer
-from .models import Emocion, RegistroEmocion
 from .serializers_auth import EmailTokenObtainPairSerializer
+
 
 class EmocionViewSet(viewsets.ModelViewSet):
     queryset = Emocion.objects.all()
@@ -233,6 +420,7 @@ class EmocionViewSet(viewsets.ModelViewSet):
 class RegistroEmocionViewSet(viewsets.ModelViewSet):
     queryset = RegistroEmocion.objects.all()
     serializer_class = RegistroEmocionSerializer
+
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer

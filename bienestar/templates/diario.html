@@ -4,85 +4,422 @@
 
 {% block page_name %}Mi Diario Personal{% endblock %}
 
-
 {% block extra_css %}
 <style>
-    /* CONTENEDOR CENTRAL */
-    .container {
-        display: flex;
-        justify-content: center;
-        margin-top: 60px;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;1,400&display=swap');
 
-    .card {
-        background: white;
-        width: 650px;
-        padding: 30px;
-        border-radius: 14px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
+.diario-wrapper {
+    max-width: 780px;
+    margin: 0 auto;
+}
 
-    .card h1 {
-        text-align: center;
-        color: #006d67;
-        margin-bottom: 5px;
-    }
+/* ===== HERO ===== */
+.diario-hero {
+    background: linear-gradient(135deg, #2d6a4f 0%, #52b788 100%);
+    border-radius: 24px;
+    padding: 36px 40px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
 
-    .card p {
-        text-align: center;
-        color: #555;
-        margin-bottom: 30px;
-    }
+.diario-hero::before {
+    content: '📔';
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 80px;
+    opacity: 0.15;
+}
 
-    label {
-        font-weight: bold;
-        display: block;
-        margin-bottom: 8px;
-    }
+.diario-hero-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+}
 
-    textarea {
-        width: 100%;
-        height: 180px;
-        border-radius: 10px;
-        border: 1px solid #ccc;
-        padding: 12px;
-        font-size: 14px;
-        resize: none;
-    }
+.diario-hero-text h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    color: white;
+    margin: 0 0 4px;
+}
 
-    button {
-        margin-top: 25px;
-        width: 100%;
-        background-color: #006d67;
-        color: white;
-        border: none;
-        padding: 14px;
-        font-size: 16px;
-        border-radius: 10px;
-        cursor: pointer;
-    }
+.diario-hero-text p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+}
 
-    button:hover {
-        background-color: #005a55;
-    }
+/* ===== FORMULARIO ===== */
+.diario-form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    margin-bottom: 32px;
+}
+
+.diario-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.diario-form-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: #2d6a4f;
+    margin: 0;
+}
+
+.diario-fecha {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #aaa;
+    background: #f5f5f5;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.diario-textarea {
+    width: 100%;
+    min-height: 160px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-family: 'Lora', serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #333;
+    background: #fdfcf8;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.diario-textarea:focus {
+    outline: none;
+    border-color: #52b788;
+    box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.1);
+    background: white;
+}
+
+.diario-textarea::placeholder {
+    color: #bbb;
+    font-style: italic;
+}
+
+.diario-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+}
+
+.char-count {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: #bbb;
+}
+
+.btn-guardar-diario {
+    width: auto;
+    padding: 11px 28px;
+    background: linear-gradient(135deg, #2d6a4f, #52b788);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.btn-guardar-diario:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* ===== ENTRADAS ===== */
+.entradas-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: #333;
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.entradas-section h2 span {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    background: #e8f5ee;
+    color: #2d6a4f;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.entrada-card {
+    background: white;
+    border-radius: 18px;
+    padding: 24px 28px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    border-left: 4px solid #52b788;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.entrada-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+}
+
+.entrada-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.entrada-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #2d6a4f, #52b788);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+    flex-shrink: 0;
+}
+
+.entrada-info {
+    flex: 1;
+}
+
+.entrada-fecha {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.entrada-hora {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #aaa;
+}
+
+.entrada-texto {
+    font-family: 'Lora', serif;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #555;
+    white-space: pre-line;
+}
+
+.entrada-texto.truncado {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.btn-ver-mas {
+    background: none;
+    border: none;
+    color: #52b788;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 0 0;
+    margin-top: 4px;
+    width: auto;
+    display: inline;
+    transition: color 0.2s;
+}
+
+.btn-ver-mas:hover {
+    color: #2d6a4f;
+    transform: none;
+    opacity: 1;
+}
+
+.no-entradas {
+    text-align: center;
+    padding: 50px 20px;
+    background: white;
+    border-radius: 18px;
+    color: #bbb;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.no-entradas .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.no-entradas p {
+    font-size: 15px;
+    margin: 0;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 290px;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.13);
+    transition: opacity 0.5s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.toast.exito {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- CONTENIDO -->
-<div class="container">
-    <div class="card">
-        <h1>📓 Mi Diario Personal</h1>
-        <p>Escribe tus pensamientos y reflexiones</p>
+
+<!-- Toast -->
+{% for message in messages %}
+    {% if 'diario' in message.tags %}
+    <div id="toast" class="toast exito">✅ {{ message }}</div>
+    <script>
+        setTimeout(() => {
+            const t = document.getElementById('toast');
+            if (t) { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }
+        }, 3000);
+    </script>
+    {% endif %}
+{% endfor %}
+
+<div class="diario-wrapper">
+
+    <!-- Hero -->
+    <div class="diario-hero">
+        <div class="diario-hero-icon">📓</div>
+        <div class="diario-hero-text">
+            <h1>Mi Diario Personal</h1>
+            <p>Un espacio seguro para tus pensamientos y reflexiones</p>
+        </div>
+    </div>
+
+    <!-- Formulario nueva entrada -->
+    <div class="diario-form-card">
+        <div class="diario-form-header">
+            <h3>✍️ Nueva entrada</h3>
+            <span class="diario-fecha" id="fecha-entrada"></span>
+        </div>
 
         <form method="POST">
             {% csrf_token %}
+            <textarea
+                class="diario-textarea"
+                name="contenido"
+                id="contenido"
+                placeholder="Escribe libremente… ¿Cómo fue tu día? ¿Qué sientes? ¿Qué aprendiste hoy?"
+                required
+                oninput="updateCount(this)"></textarea>
 
-            <label>¿Cómo fue tu día hoy?</label>
-            <textarea name="contenido" placeholder="Escribe libremente sobre tus pensamientos, sentimientos, experiencias del día..." required></textarea>
-
-            <button type="submit">Guardar entrada</button>
+            <div class="diario-form-footer">
+                <span class="char-count" id="char-count">0 caracteres</span>
+                <button type="submit" class="btn-guardar-diario">💾 Guardar entrada</button>
+            </div>
         </form>
     </div>
+
+    <!-- Entradas anteriores -->
+    <div class="entradas-section">
+        <h2>
+            Entradas anteriores
+            {% if entradas %}
+                <span>{{ entradas|length }} entradas</span>
+            {% endif %}
+        </h2>
+
+        {% if entradas %}
+            {% for entrada in entradas %}
+            <div class="entrada-card">
+                <div class="entrada-meta">
+                    <div class="entrada-avatar">📝</div>
+                    <div class="entrada-info">
+                        <div class="entrada-fecha">{{ entrada.fecha|date:"l, d \d\e F \d\e Y" }}</div>
+                        <div class="entrada-hora">{{ entrada.fecha|date:"H:i" }} hrs</div>
+                    </div>
+                </div>
+                <div class="entrada-texto truncado" id="texto-{{ forloop.counter }}">{{ entrada.contenido }}</div>
+                {% if entrada.contenido|length > 200 %}
+                <button class="btn-ver-mas" onclick="toggleTexto({{ forloop.counter }}, this)">
+                    Ver más ↓
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-entradas">
+                <div class="icon">📭</div>
+                <p>Aún no tienes entradas. ¡Escribe tu primera reflexión!</p>
+            </div>
+        {% endif %}
+    </div>
+
 </div>
+
+<script>
+    // Fecha en el formulario
+    const ahora = new Date();
+    document.getElementById('fecha-entrada').textContent =
+        ahora.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    // Contador de caracteres
+    function updateCount(el) {
+        document.getElementById('char-count').textContent = el.value.length + ' caracteres';
+    }
+
+    // Ver más / ver menos
+    function toggleTexto(id, btn) {
+        const el = document.getElementById('texto-' + id);
+        if (el.classList.contains('truncado')) {
+            el.classList.remove('truncado');
+            btn.textContent = 'Ver menos ↑';
+        } else {
+            el.classList.add('truncado');
+            btn.textContent = 'Ver más ↓';
+        }
+    }
+</script>
+
 {% endblock %}
