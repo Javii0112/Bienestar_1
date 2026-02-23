@@ -16,7 +16,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-
             background: linear-gradient(135deg, #cfe9dd, #eef6f3);
         }
 
@@ -39,6 +38,17 @@
             font-size: 14px;
             color: #666;
             margin-bottom: 25px;
+        }
+
+        .error-msg {
+            background: #fde8e8;
+            border: 1px solid #f5b7b1;
+            color: #c0392b;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            text-align: center;
         }
 
         label {
@@ -115,8 +125,40 @@
         .extra a:hover {
             text-decoration: underline;
         }
+        .error-msg {
+            background: #fde8e8;
+            border: 1px solid #f5b7b1;
+            color: #c0392b;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            text-align: center;
+            transition: opacity 1s ease;  /* ← agrega esto */
+        }
+
     </style>
 </head>
+
+<script>
+    function togglePassword() {
+        const password = document.getElementById("password");
+        password.type = password.type === "password" ? "text" : "password";
+    }
+
+    window.onload = function() {
+        const errorMsg = document.getElementById("error-msg");
+        if (errorMsg) {
+            setTimeout(function() {
+                errorMsg.style.transition = "opacity 1s ease";
+                errorMsg.style.opacity = "0";
+                setTimeout(function() {
+                    errorMsg.style.display = "none";
+                }, 1000);
+            }, 5000);
+        }
+    };
+</script>
 
 <body>
 
@@ -124,11 +166,18 @@
     <h2>Bienestar Campus 🌿</h2>
     <p class="subtitle">Inicia sesión para continuar</p>
 
+    {% if error %}
+    <div class="error-msg" id="error-msg">
+        ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
     <form method="POST">
         {% csrf_token %}
 
         <label>Correo institucional</label>
-        <input type="email" name="email" placeholder="correo@duocuc.cl" required>
+        <input type="email" name="email" placeholder="correo@duocuc.cl"
+               value="{{ email|default:'' }}" required>
 
         <label>Contraseña</label>
         <div class="password-wrapper">

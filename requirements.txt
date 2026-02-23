@@ -4,3 +4,5 @@ djangorestframework-simplejwt
 customtkinter
 PySide6
 requests
+pyqtgraph
+reportlab

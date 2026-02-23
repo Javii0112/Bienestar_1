@@ -119,7 +119,7 @@ def registro_view(request):
 # ==================================================
 def login_view(request):
     if request.method == "POST":
-        email = request.POST.get("email")
+        email    = request.POST.get("email")
         password = request.POST.get("password")
 
         user = authenticate(request, email=email, password=password)
@@ -128,7 +128,11 @@ def login_view(request):
             login(request, user)
             return redirect("dashboard")
         else:
-            messages.error(request, "Correo o contraseña incorrectos")
+            # ← render en vez de redirect para que el mensaje no se pierda
+            return render(request, "login.html", {
+                "error": "Correo o contraseña incorrectos.",
+                "email": email  # para no borrar el email que escribió
+            })
 
     return render(request, "login.html")
 
@@ -403,12 +407,139 @@ def limpiar_logros_sesion(request):
     return JsonResponse({'ok': True})
 
 
+
 # ==================================================
-# API REST
+# VISTAS API PARA APP DE ESCRITORIO
+# Agrega esto al FINAL de tu views.py existente
 # ==================================================
-from rest_framework import viewsets
+from rest_framework import viewsets, generics
+from rest_framework.permissions import IsAdminUser
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import EmocionSerializer, RegistroEmocionSerializer
+from .models import Usuario, Perfil, RegistroEmocion, RegistroHabito, Diario
+from .serializers import (
+    EmocionSerializer, RegistroEmocionSerializer,
+    AlumnoResumenSerializer, PerfilSerializer,
+    RegistroHabitoSerializer, DiarioSerializer,
+)
+from .serializers_auth import EmailTokenObtainPairSerializer
+
+
+
+class EmocionViewSet(viewsets.ModelViewSet):
+    queryset = Emocion.objects.all()
+    serializer_class = EmocionSerializer
+
+
+class RegistroEmocionViewSet(viewsets.ModelViewSet):
+    queryset = RegistroEmocion.objects.all()
+    serializer_class = RegistroEmocionSerializer
+
+
+class EmailTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
+
+
+# ── Nuevas vistas para app escritorio ────────────
+
+class AlumnoListView(generics.ListAPIView):
+    """
+    GET /api/alumnos/
+    Lista todos los usuarios NO admin (alumnos).
+    Solo accesible por administradores.
+    """
+    serializer_class = AlumnoResumenSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(
+            is_staff=False,
+            is_superuser=False
+        ).select_related('perfil').order_by('perfil__apellido')
+
+
+class AlumnoPerfilView(generics.RetrieveAPIView):
+    """
+    GET /api/alumnos/<id>/perfil/
+    Devuelve el perfil completo de un alumno.
+    """
+    serializer_class = PerfilSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_object(self):
+        return generics.get_object_or_404(Perfil, usuario__id=self.kwargs['pk'])
+
+
+class AlumnoEmocionesView(generics.ListAPIView):
+    """
+    GET /api/alumnos/<id>/emociones/
+    Devuelve el historial de emociones de un alumno.
+    """
+    serializer_class = RegistroEmocionSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return RegistroEmocion.objects.filter(
+            usuario__id=self.kwargs['pk']
+        ).select_related('emocion').order_by('-fecha')
+
+
+class AlumnoHabitosView(generics.ListAPIView):
+    """
+    GET /api/alumnos/<id>/habitos/
+    Devuelve el historial de hábitos de un alumno.
+    """
+    serializer_class = RegistroHabitoSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return RegistroHabito.objects.filter(
+            usuario__id=self.kwargs['pk']
+        ).select_related('habito').order_by('-fecha')
+
+
+class AlumnoDiarioView(generics.ListAPIView):
+    """
+    GET /api/alumnos/<id>/diario/
+    Devuelve las entradas del diario de un alumno.
+    """
+    serializer_class = DiarioSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return Diario.objects.filter(
+            usuario__id=self.kwargs['pk']
+        ).order_by('-fecha')
+
+# ==================================================
+# VISTA MENSAJES
+# Agrega esto en tu views.py
+# ==================================================
+
+@login_required
+def mensajes_view(request):
+    from .models import NotaPsicologo
+    notas = NotaPsicologo.objects.filter(
+        alumno=request.user
+    ).order_by('-fecha')
+
+    # Marcar todos como leídos al abrir la página
+    notas.filter(leido=False).update(leido=True)
+
+    return render(request, 'mensajes.html', {'notas': notas})
+
+# ==================================================
+# VISTAS API PARA APP DE ESCRITORIO
+# ==================================================
+from rest_framework import viewsets, generics
+from rest_framework.permissions import IsAdminUser
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .models import Usuario, Perfil, RegistroEmocion, RegistroHabito, Diario, NotaPsicologo
+from .serializers import (
+    EmocionSerializer, RegistroEmocionSerializer,
+    AlumnoResumenSerializer, PerfilSerializer,
+    RegistroHabitoSerializer, DiarioSerializer,
+    NotaPsicologoSerializer,
+)
 from .serializers_auth import EmailTokenObtainPairSerializer
 
 
@@ -424,3 +555,72 @@ class RegistroEmocionViewSet(viewsets.ModelViewSet):
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
+
+
+class AlumnoListView(generics.ListAPIView):
+    serializer_class = AlumnoResumenSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(
+            is_staff=False,
+            is_superuser=False
+        ).select_related('perfil').order_by('perfil__apellido')
+
+
+class AlumnoPerfilView(generics.RetrieveAPIView):
+    serializer_class = PerfilSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_object(self):
+        return generics.get_object_or_404(Perfil, usuario__id=self.kwargs['pk'])
+
+
+class AlumnoEmocionesView(generics.ListAPIView):
+    serializer_class = RegistroEmocionSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return RegistroEmocion.objects.filter(
+            usuario__id=self.kwargs['pk']
+        ).select_related('emocion').order_by('-fecha')
+
+
+class AlumnoHabitosView(generics.ListAPIView):
+    serializer_class = RegistroHabitoSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return RegistroHabito.objects.filter(
+            usuario__id=self.kwargs['pk']
+        ).select_related('habito').order_by('-fecha')
+
+
+class AlumnoDiarioView(generics.ListAPIView):
+    serializer_class = DiarioSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return Diario.objects.filter(
+            usuario__id=self.kwargs['pk']
+        ).order_by('-fecha')
+
+
+class AlumnoNotasView(generics.ListCreateAPIView):
+    serializer_class = NotaPsicologoSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_queryset(self):
+        return NotaPsicologo.objects.filter(
+            alumno__id=self.kwargs['pk']
+        ).order_by('-fecha')
+
+    def perform_create(self, serializer):
+        alumno = generics.get_object_or_404(Usuario, id=self.kwargs['pk'])
+        serializer.save(alumno=alumno, psicologo=self.request.user)
+
+
+
+
+
+

@@ -212,8 +212,30 @@ class LogroUsuario(models.Model):
         return f"{self.usuario} - {self.logro.nombre}"
 
 
+# ==================================================
+# NOTAS DEL PSICÓLOGO
+# Agrega esto al FINAL de tu models.py
+# ==================================================
+class NotaPsicologo(models.Model):
+    alumno    = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notas_psicologo'
+    )
+    psicologo = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notas_escritas'
+    )
+    contenido = models.TextField()
+    fecha     = models.DateTimeField(auto_now_add=True)
+    leido     = models.BooleanField(default=False)
 
+    class Meta:
+        ordering = ['-fecha']
 
+    def __str__(self):
+        return f"Nota de {self.psicologo} sobre {self.alumno} — {self.fecha:%d/%m/%Y}"
 
 
 

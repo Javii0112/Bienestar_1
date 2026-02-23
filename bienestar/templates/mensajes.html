@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Mensajes del Psicólogo{% endblock %}
+
+{% block content %}
+<div class="mensajes-container">
+
+  <div class="mensajes-header">
+    <h2>💬 Mensajes del Psicólogo</h2>
+    <p class="mensajes-subtitle">Aquí puedes leer los mensajes que tu psicólogo te ha enviado.</p>
+  </div>
+
+  {% if not notas %}
+    <div class="sin-mensajes">
+      <span class="sin-mensajes-icono">📭</span>
+      <p>Aún no tienes mensajes de tu psicólogo.</p>
+    </div>
+
+  {% else %}
+    {% for nota in notas %}
+    <div class="nota-card">
+      <div class="mensaje-avatar">🧑‍⚕️</div>
+      <div class="mensaje-body">
+        <div class="mensaje-meta">
+          <span class="mensaje-autor">Psicólogo/a</span>
+          <span class="mensaje-fecha">{{ nota.fecha|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="mensaje-texto">{{ nota.contenido }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+
+</div>
+
+<style>
+  .mensajes-container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 32px 20px;
+  }
+
+  .mensajes-header {
+    margin-bottom: 28px;
+  }
+
+  .mensajes-header h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a7a4a;
+    margin-bottom: 6px;
+  }
+
+  .mensajes-subtitle {
+    color: #6b8f77;
+    font-size: 0.9rem;
+  }
+
+  .sin-mensajes {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ecfb5;
+  }
+
+  .sin-mensajes-icono {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .nota-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: #ffffff;
+    border: 1px solid #d4ead9;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(46,158,98,0.07);
+  }
+
+  .mensaje-avatar {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .mensaje-body {
+    flex: 1;
+  }
+
+  .mensaje-meta {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .mensaje-autor {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #1a7a4a;
+  }
+
+  .mensaje-fecha {
+    font-size: 0.75rem;
+    color: #9ecfb5;
+  }
+
+  .mensaje-texto {
+    background: #f0f7f2;
+    border: 1px solid #d4ead9;
+    border-radius: 10px;
+    border-top-left-radius: 2px;
+    padding: 12px 16px;
+    font-size: 0.93rem;
+    line-height: 1.65;
+    color: #1a2e22;
+  }
+</style>
+{% endblock %}

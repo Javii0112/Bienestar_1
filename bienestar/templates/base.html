@@ -480,6 +480,24 @@
             .container {
                 padding: 20px 16px;
             }
+            /* ===== barra de mensajes ===== */
+            .badge {
+                background: #e53e3e;
+                color: white;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 2px 7px;
+                border-radius: 20px;
+                margin-left: 6px;
+                vertical-align: middle;
+                animation: pulse 1.5s infinite;
+            }
+
+            @keyframes pulse {
+                0%   { transform: scale(1); }
+                50%  { transform: scale(1.15); }
+                100% { transform: scale(1); }
+            }
         }
     </style>
 
@@ -520,12 +538,25 @@
         <a href="{% url 'perfil' %}">
             <span class="nav-icon">👤</span> <span class="nav-text">Mi Perfil</span>
         </a>
+
+        <a href="{% url 'mensajes' %}">
+            <span class="nav-icon">💬</span>
+            <span class="nav-text">
+                Mis Mensajes
+                {% if mensajes_no_leidos > 0 %}
+                <span class="badge">{{ mensajes_no_leidos }}</span>
+                {% endif %}
+            </span>
+        </a>
     </nav>
 
     <div class="sidebar-footer">
-        <a href="{% url 'logout' %}">
+    <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">
             <span class="nav-icon">🚪</span> <span class="nav-text">Cerrar sesión</span>
-        </a>
+        </button>
+    </form>
     </div>
 </aside>
 

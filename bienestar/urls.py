@@ -2,6 +2,7 @@ from django.urls import path, include
 from . import views
 from django.contrib.auth.views import LogoutView
 from bienestar.views import EmailTokenObtainPairView
+from .views import mensajes_view
 
 urlpatterns = [
     path('', views.login_view, name='login'),
@@ -17,4 +18,5 @@ urlpatterns = [
     path('api/token/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('logros/', views.logros_view, name='logros'),
     path('limpiar-logros/', views.limpiar_logros_sesion, name='limpiar_logros_sesion'),
+    path('mensajes/', mensajes_view, name='mensajes'),
 ]

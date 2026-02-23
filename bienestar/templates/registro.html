@@ -73,6 +73,7 @@
         .requirements {
             font-size: 12px;
             margin-bottom: 10px;
+            display: none;  /* oculto al inicio */
         }
 
         .requirements li {
@@ -89,6 +90,7 @@
             margin-bottom: 10px;
             padding: 10px;
             font-size: 13px;
+            transition: opacity 1s ease;
         }
 
         .success-message {
@@ -97,6 +99,7 @@
             margin-bottom: 10px;
             padding: 10px;
             font-size: 13px;
+            transition: opacity 1s ease;
         }
 
         button {
@@ -204,14 +207,29 @@
         input.type = input.type === "password" ? "text" : "password";
     }
 
+    function autoHide(el) {
+        setTimeout(function() {
+            el.style.transition = 'opacity 1s ease';
+            el.style.opacity = '0';
+            setTimeout(function() {
+                el.style.display = 'none';
+            }, 1000);
+        }, 5000);
+    }
+
     const passwordInput = document.getElementById('password');
-    const reqLength = document.getElementById('req-length');
-    const reqUpper = document.getElementById('req-uppercase');
-    const reqLower = document.getElementById('req-lowercase');
-    const reqNumber = document.getElementById('req-number');
-    const reqSpecial = document.getElementById('req-special');
-    const form = document.getElementById('registro-form');
-    const errorDiv = document.getElementById('error-message');
+    const reqLength    = document.getElementById('req-length');
+    const reqUpper     = document.getElementById('req-uppercase');
+    const reqLower     = document.getElementById('req-lowercase');
+    const reqNumber    = document.getElementById('req-number');
+    const reqSpecial   = document.getElementById('req-special');
+    const form         = document.getElementById('registro-form');
+    const errorDiv     = document.getElementById('error-message');
+
+    // Mostrar requisitos al empezar a escribir la contraseña
+    passwordInput.addEventListener('focus', () => {
+        document.querySelector('.requirements').style.display = 'block';
+    });
 
     // Validación dinámica de contraseña
     passwordInput.addEventListener('input', () => {
@@ -226,37 +244,38 @@
     // Validación del frontend al enviar
     form.addEventListener('submit', (e) => {
         errorDiv.style.display = 'none';
-        const val = passwordInput.value;
+        const val      = passwordInput.value;
         const password2 = document.getElementById('password2').value;
-        const email = form.email.value;
-        const genero = form.genero.value;
+        const email    = form.email.value;
+        const genero   = form.genero.value;
 
         let errors = [];
 
-        if (!email.endsWith("@duocuc.cl")) {
-            errors.push("Debes usar tu correo institucional @duocuc.cl");
-        }
-
-        if (val !== password2) {
-            errors.push("Las contraseñas no coinciden");
-        }
-
-        if (!genero) {
-            errors.push("Debes seleccionar un género");
-        }
-
-        if (val.length < 8) errors.push("La contraseña debe tener al menos 8 caracteres");
-        if (!/[A-Z]/.test(val)) errors.push("La contraseña debe tener al menos una letra mayúscula");
-        if (!/[a-z]/.test(val)) errors.push("La contraseña debe tener al menos una letra minúscula");
-        if (!/[0-9]/.test(val)) errors.push("La contraseña debe tener al menos un número");
+        if (!email.endsWith("@duocuc.cl"))      errors.push("Debes usar tu correo institucional @duocuc.cl");
+        if (val !== password2)                   errors.push("Las contraseñas no coinciden");
+        if (!genero)                             errors.push("Debes seleccionar un género");
+        if (val.length < 8)                      errors.push("La contraseña debe tener al menos 8 caracteres");
+        if (!/[A-Z]/.test(val))                  errors.push("La contraseña debe tener al menos una letra mayúscula");
+        if (!/[a-z]/.test(val))                  errors.push("La contraseña debe tener al menos una letra minúscula");
+        if (!/[0-9]/.test(val))                  errors.push("La contraseña debe tener al menos un número");
         if (!/[!@#$%^&*(),.?\":{}|<>]/.test(val)) errors.push("La contraseña debe tener al menos un carácter especial");
 
         if (errors.length > 0) {
             e.preventDefault();
             errorDiv.innerHTML = errors.join("<br>");
             errorDiv.style.display = 'block';
+            errorDiv.style.opacity = '1';
+            autoHide(errorDiv);
         }
     });
+
+    // Auto-ocultar mensajes del backend (Django)
+    window.onload = function() {
+        const backendMessages = document.getElementById('backend-messages');
+        if (backendMessages) {
+            autoHide(backendMessages);
+        }
+    };
 </script>
 </body>
 </html>
