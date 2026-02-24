@@ -202,34 +202,164 @@ def dashboard_view(request):
 # ==================================================
 @login_required
 def registro_habitos(request):
-    habitos = Habito.objects.all()
+    from datetime import timedelta
+    habitos = Habito.objects.select_related("tipo").all()
+    hoy = date.today()
 
     if request.method == "POST":
         habito_id = request.POST.get("habito")
         valor = request.POST.get("valor")
 
-        if habito_id and valor:
-            habito = Habito.objects.filter(id=habito_id).first()
+        if not habito_id or not valor:
+            messages.error(request, "Debes seleccionar un hábito e ingresar un valor.", extra_tags="habito")
+            return redirect("habitos")
 
-            if habito:
-                RegistroHabito.objects.create(
-                    usuario=request.user,
-                    habito=habito,
-                    fecha=date.today(),
-                    valor=int(valor)
-                )
-                # Verificar logros
-                nuevos_logros = verificar_logros(request.user)
-                guardar_logros_sesion(request, nuevos_logros)
+        habito = Habito.objects.filter(id=habito_id).first()
 
-                messages.success(request, "¡Hábito registrado! 💪", extra_tags='habito')
+        if habito:
+            ya_registrado = RegistroHabito.objects.filter(
+                usuario=request.user,
+                habito=habito,
+                fecha=hoy
+            ).exists()
+
+            if ya_registrado:
+                messages.error(request, f"Ya registraste '{habito.nombre}' hoy. ¡Vuelve mañana!", extra_tags="habito")
+            else:
+                try:
+                    valor_int = int(valor)
+                    if valor_int < 1:
+                        raise ValueError
+                    RegistroHabito.objects.create(
+                        usuario=request.user,
+                        habito=habito,
+                        fecha=hoy,
+                        valor=valor_int
+                    )
+                    nuevos_logros = verificar_logros(request.user)
+                    guardar_logros_sesion(request, nuevos_logros)
+                    messages.success(request, f"¡'{habito.nombre}' registrado correctamente! 💪", extra_tags="habito")
+                except ValueError:
+                    messages.error(request, "El valor debe ser un número válido mayor a 0.", extra_tags="habito")
 
         return redirect("habitos")
 
+    habitos_hoy = RegistroHabito.objects.filter(
+        usuario=request.user,
+        fecha=hoy
+    ).select_related("habito__tipo").order_by("-id")
+
+    habitos_hoy_ids = list(habitos_hoy.values_list("habito_id", flat=True))
+
+    from .utils import calcular_racha_habitos
+    racha = calcular_racha_habitos(request.user)
+
+    # Encontrar el domingo más reciente
+    dias_desde_domingo = (hoy.weekday() + 1) % 7
+    domingo = hoy - timedelta(days=dias_desde_domingo)
+    dias_semana = [domingo + timedelta(days=i) for i in range(7)]
+
+    dias_con_habito = set(
+        RegistroHabito.objects.filter(
+            usuario=request.user,
+            fecha__in=dias_semana
+        ).values_list("fecha", flat=True)
+    )
+
+    dias_es = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
+    progreso_semanal = [{"dia": dias_es[(d.weekday() + 1) % 7], "activo": d in dias_con_habito} for d in dias_semana]
+
     return render(request, "habitos.html", {
-        "habitos": habitos
+        "habitos": habitos,
+        "habitos_hoy": habitos_hoy,
+        "habitos_hoy_ids": habitos_hoy_ids,
+        "racha": racha,
+        "progreso_semanal": progreso_semanal,
+        "total_hoy": habitos_hoy.count(),
     })
 
+# ==================================================
+# RECOMENDACIONES CON IA (agregar en views.py)
+# ==================================================
+import os
+import anthropic
+
+@login_required
+def recomendaciones_habitos(request):
+    """Vista que genera recomendaciones personalizadas con Claude."""
+    from django.http import JsonResponse
+    from datetime import timedelta
+
+    hoy = date.today()
+    ultima_semana = hoy - timedelta(days=7)
+
+    # Obtener historial del usuario
+    registros = RegistroHabito.objects.filter(
+        usuario=request.user,
+        fecha__gte=ultima_semana
+    ).select_related('habito__tipo')
+
+    # Construir resumen del historial
+    resumen = {}
+    for r in registros:
+        nombre = r.habito.nombre
+        if nombre not in resumen:
+            resumen[nombre] = {'dias': 0, 'tipo': r.habito.tipo.nombre}
+        resumen[nombre]['dias'] += 1
+
+    if resumen:
+        historial_texto = ", ".join([
+            f"{nombre} ({datos['dias']} días esta semana)"
+            for nombre, datos in resumen.items()
+        ])
+    else:
+        historial_texto = "ningún hábito registrado aún"
+
+    # Llamar a Claude
+    try:
+        cliente = anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+        respuesta = cliente.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            messages=[{
+                "role": "user",
+                "content": f"""Eres un coach de bienestar para estudiantes universitarios.
+                El estudiante ha registrado esta semana: {historial_texto}.
+                Dame exactamente 3 recomendaciones de hábitos saludables personalizadas y cortas.
+                Formato de respuesta (solo esto, sin texto extra):
+                1. [emoji] Título corto: descripción breve en máximo 15 palabras.
+                2. [emoji] Título corto: descripción breve en máximo 15 palabras.
+                3. [emoji] Título corto: descripción breve en máximo 15 palabras."""
+                            }]
+                        )
+        texto = respuesta.content[0].text
+        # Parsear las 3 recomendaciones
+        lineas = [l.strip() for l in texto.strip().split('\n') if l.strip()]
+        recomendaciones = []
+        for linea in lineas[:3]:
+            # Quitar el número del inicio (1. 2. 3.)
+            if linea and linea[0].isdigit():
+                linea = linea[2:].strip()
+            partes = linea.split(':', 1)
+            if len(partes) == 2:
+                recomendaciones.append({
+                    'titulo': partes[0].strip(),
+                    'descripcion': partes[1].strip()
+                })
+            else:
+                recomendaciones.append({
+                    'titulo': linea,
+                    'descripcion': ''
+                })
+
+    except Exception as e:
+        recomendaciones = [
+            {'titulo': '💧 Hidratación', 'descripcion': 'Bebe al menos 8 vasos de agua al día.'},
+            {'titulo': '🏃 Ejercicio', 'descripcion': 'Camina 30 minutos para activar tu energía.'},
+            {'titulo': '😴 Descanso', 'descripcion': 'Duerme 7-9 horas para rendir mejor.'},
+        ]
+
+    return JsonResponse({'recomendaciones': recomendaciones})
 
 # ==================================================
 # ESTADÍSTICAS

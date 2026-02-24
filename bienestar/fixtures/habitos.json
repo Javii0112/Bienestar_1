@@ -1,0 +1,57 @@
+[
+  {
+    "model": "bienestar.tipohabito",
+    "pk": 1,
+    "fields": { "nombre": "Actividad Física" }
+  },
+  {
+    "model": "bienestar.tipohabito",
+    "pk": 2,
+    "fields": { "nombre": "Salud" }
+  },
+  {
+    "model": "bienestar.tipohabito",
+    "pk": 3,
+    "fields": { "nombre": "Bienestar Mental" }
+  },
+  {
+    "model": "bienestar.tipohabito",
+    "pk": 4,
+    "fields": { "nombre": "Aprendizaje" }
+  },
+  {
+    "model": "bienestar.habito",
+    "pk": 1,
+    "fields": { "nombre": "Ejercicio", "descripcion": "Actividad física diaria", "tipo": 1 }
+  },
+  {
+    "model": "bienestar.habito",
+    "pk": 2,
+    "fields": { "nombre": "Caminar", "descripcion": "Caminata diaria al aire libre", "tipo": 1 }
+  },
+  {
+    "model": "bienestar.habito",
+    "pk": 3,
+    "fields": { "nombre": "Agua", "descripcion": "Vasos de agua consumidos", "tipo": 2 }
+  },
+  {
+    "model": "bienestar.habito",
+    "pk": 4,
+    "fields": { "nombre": "Sueño", "descripcion": "Horas de sueño", "tipo": 2 }
+  },
+  {
+    "model": "bienestar.habito",
+    "pk": 5,
+    "fields": { "nombre": "Meditación", "descripcion": "Minutos de meditación o respiración", "tipo": 3 }
+  },
+  {
+    "model": "bienestar.habito",
+    "pk": 6,
+    "fields": { "nombre": "Lectura", "descripcion": "Minutos de lectura", "tipo": 4 }
+  },
+  {
+    "model": "bienestar.habito",
+    "pk": 7,
+    "fields": { "nombre": "Estudio", "descripcion": "Minutos de estudio", "tipo": 4 }
+  }
+]

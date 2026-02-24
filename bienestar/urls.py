@@ -19,4 +19,5 @@ urlpatterns = [
     path('logros/', views.logros_view, name='logros'),
     path('limpiar-logros/', views.limpiar_logros_sesion, name='limpiar_logros_sesion'),
     path('mensajes/', mensajes_view, name='mensajes'),
+    path('habitos/recomendaciones/', views.recomendaciones_habitos, name='recomendaciones_habitos'),
 ]

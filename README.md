@@ -37,3 +37,12 @@ cd ..
 python manage.py runserver 0.0.0.0:8000
 # luego debes ingresar a la normal que es esta 
 http://127.0.0.1:8000/
+
+# Importante, antes de arrancar el servidor se debe hacer un loaddata de cada json para poder guargar su contenido.
+
+1. pip install -r requirements.txt
+2. python manage.py migrate
+3. python manage.py loaddata emociones.json
+4. python manage.py loaddata habitos.json
+5. python manage.py loaddata logros.json
+6. python manage.py createsuperuser

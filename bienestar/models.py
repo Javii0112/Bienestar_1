@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
 
 
+
 # ==================================================
 # MANAGER DE USUARIO (OBLIGATORIO)
 # ==================================================
@@ -172,11 +173,12 @@ class Auditoria(models.Model):
 class Diario(models.Model):
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     contenido = models.TextField()
+    estado_animo = models.CharField(max_length=10, blank=True, default='')
     fecha = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.usuario} - {self.fecha}"
-    
+        return f"Diario de {self.usuario} - {self.fecha:%d/%m/%Y}"
+
 # ==================================================
 # LOGROS Y BADGES
 # ==================================================

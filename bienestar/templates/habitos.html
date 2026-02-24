@@ -76,7 +76,6 @@
     margin: 0;
 }
 
-/* Chips de categorías visuales */
 .habitos-chips {
     display: flex;
     gap: 10px;
@@ -95,6 +94,55 @@
     padding: 5px 12px;
     border-radius: 20px;
     backdrop-filter: blur(4px);
+    position: relative;
+    cursor: default;
+}
+
+.chip .chip-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    background: rgba(0,0,0,0.85);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: normal;
+    width: 160px;
+    z-index: 100;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}
+
+.chip .chip-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0,0,0,0.85);
+}
+
+.chip:hover .chip-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+.chip:hover .chip-tooltip[style*="translateX(-20%)"] {
+    transform: translateX(-20%) translateY(-4px);
+}
+
+.chip:hover .chip-tooltip[style*="translateX(-80%)"] {
+    transform: translateX(-80%) translateY(-4px);
 }
 
 /* Tarjeta principal */
@@ -155,13 +203,32 @@
     box-shadow: 0 0 0 3px rgba(0, 121, 107, 0.08);
 }
 
-/* Tips visuales */
+.valor-hint {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 5px;
+    min-height: 16px;
+}
+
+/* Recomendaciones */
 .habitos-tips {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-top: 4px;
+}
+
+.section-label {
+    grid-column: 1 / -1;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: -8px;
 }
 
 .tip-card {
@@ -172,23 +239,149 @@
     text-align: center;
 }
 
-.tip-card .tip-icon {
-    font-size: 24px;
-    margin-bottom: 6px;
+.tip-card .tip-icon { font-size: 24px; margin-bottom: 6px; }
+.tip-card .tip-label { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #006d63; font-weight: 500; }
+.tip-card .tip-desc  { font-family: 'DM Sans', sans-serif; font-size: 11px; color: #aaa; margin-top: 2px; }
+
+/* Racha y progreso semanal */
+.habitos-stats-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    align-items: center;
+    background: #f8fffe;
+    border: 1px solid #e0f5f2;
+    border-radius: 14px;
+    padding: 14px 18px;
 }
 
-.tip-card .tip-label {
+.racha-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
+    font-size: 14px;
+    font-weight: 600;
     color: #006d63;
+    white-space: nowrap;
+}
+
+.racha-badge .racha-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: #00c6a7;
+    line-height: 1;
+}
+
+.semana-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.semana-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.semana-dot-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e0e0e0;
+}
+
+.semana-dot-circle.activo {
+    background: linear-gradient(135deg, #006d63, #00c6a7);
+}
+
+.semana-dot-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px;
+    color: #bbb;
+    text-transform: uppercase;
+}
+
+/* Historial hoy */
+.historial-hoy {
+    margin-top: 28px;
+    background: white;
+    border-radius: 18px;
+    padding: 22px 26px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+
+.historial-hoy-titulo {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: #333;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.historial-hoy-titulo span {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    background: #e8f5ee;
+    color: #006d63;
+    padding: 3px 10px;
+    border-radius: 20px;
     font-weight: 500;
 }
 
-.tip-card .tip-desc {
+.habito-hoy-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.habito-hoy-item:last-child { border-bottom: none; }
+
+.habito-hoy-icono {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #e8f5ee, #d4f1e4);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.habito-hoy-info { flex: 1; }
+
+.habito-hoy-nombre {
     font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.habito-hoy-valor {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
     color: #aaa;
-    margin-top: 2px;
+}
+
+.habito-hoy-check {
+    font-size: 16px;
+    color: #00c6a7;
+}
+
+.no-habitos-hoy {
+    text-align: center;
+    padding: 20px;
+    color: #ccc;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
 }
 
 /* Botones */
@@ -216,10 +409,6 @@
     opacity: 0.9;
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 121, 107, 0.3);
-}
-
-.btn-guardar:active {
-    transform: translateY(0);
 }
 
 .btn-volver {
@@ -263,32 +452,22 @@
     gap: 10px;
 }
 
-.toast.exito {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
+.toast.exito { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.toast.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 
-.toast.error {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
+/* Hábito deshabilitado */
+option.ya-registrado { color: #aaa; }
 
 @media (max-width: 600px) {
-    .habitos-card-inner {
-        grid-template-columns: 1fr;
-    }
-    .habitos-tips {
-        grid-template-columns: 1fr;
-    }
+    .habitos-card-inner { grid-template-columns: 1fr; }
+    .habitos-tips { grid-template-columns: 1fr; }
+    .semana-dots { gap: 4px; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- Toast -->
 {% for message in messages %}
     {% if 'habito' in message.tags %}
     <div id="toast" class="toast {% if 'success' in message.tags %}exito{% else %}error{% endif %}">
@@ -297,11 +476,8 @@
     </div>
     <script>
         setTimeout(() => {
-            const toast = document.getElementById('toast');
-            if (toast) {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 500);
-            }
+            const t = document.getElementById('toast');
+            if (t) { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }
         }, 3000);
     </script>
     {% endif %}
@@ -319,11 +495,21 @@
             </div>
         </div>
         <div class="habitos-chips">
-            <span class="chip">💪 Ejercicio</span>
-            <span class="chip">💧 Hidratación</span>
-            <span class="chip">😴 Sueño</span>
-            <span class="chip">🧘 Meditación</span>
-            <span class="chip">📖 Lectura</span>
+            <span class="chip">💪 Ejercicio
+                <span class="chip-tooltip" style="left:20%; transform:translateX(-20%);">30 min diarios recomendados<br>Mejora tu energía y salud</span>
+            </span>
+            <span class="chip">💧 Hidratación
+                <span class="chip-tooltip">8 vasos de agua al día<br>Mantén tu cuerpo hidratado</span>
+            </span>
+            <span class="chip">😴 Sueño
+                <span class="chip-tooltip">7-9 horas ideales<br>Fundamental para tu bienestar</span>
+            </span>
+            <span class="chip">🧘 Meditación
+                <span class="chip-tooltip">10-20 min diarios<br>Reduce el estrés y la ansiedad</span>
+            </span>
+            <span class="chip">📖 Lectura
+                <span class="chip-tooltip" style="left:80%; transform:translateX(-80%);">30 min diarios<br>Estimula tu mente y concentración</span>
+            </span>
         </div>
     </div>
 
@@ -333,37 +519,60 @@
             {% csrf_token %}
             <div class="habitos-card-inner">
 
+                <!-- Racha + progreso semanal -->
+                <div class="habitos-stats-row">
+                    <div class="racha-badge">
+                        🔥 <span class="racha-num">{{ racha }}</span> día{% if racha != 1 %}s{% endif %} seguido{% if racha != 1 %}s{% endif %}
+                    </div>
+                    <div class="semana-dots">
+                        {% for dia in progreso_semanal %}
+                        <div class="semana-dot">
+                            <div class="semana-dot-circle {% if dia.activo %}activo{% endif %}"></div>
+                            <div class="semana-dot-label">{{ dia.dia }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Select hábito -->
                 <div class="form-group full">
                     <label>¿Qué hábito realizaste hoy?</label>
-                    <select name="habito" required>
+                    <select name="habito" id="select-habito" required onchange="actualizarHint(this)">
                         <option value="">Selecciona un hábito</option>
                         {% for h in habitos %}
-                            <option value="{{ h.id }}">{{ h.nombre }}</option>
+                            <option value="{{ h.id }}"
+                                {% if h.id in habitos_hoy_ids %}disabled class="ya-registrado"{% endif %}
+                                data-tipo="{{ h.tipo.nombre }}">
+                                {{ h.nombre }}{% if h.id in habitos_hoy_ids %} ✓ ya registrado{% endif %}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
 
+                <!-- Valor -->
                 <div class="form-group full">
-                    <label>Minutos o veces realizadas</label>
-                    <input type="number" name="valor" min="1" max="500" placeholder="Ej: 30">
+                    <label>Cantidad realizada</label>
+                    <input type="number" name="valor" id="input-valor" min="1" max="500" placeholder="Ej: 30">
+                    <div class="valor-hint" id="valor-hint">Selecciona un hábito para ver la unidad</div>
                 </div>
 
-                <!-- Tips de referencia -->
-                <div class="habitos-tips">
-                    <div class="tip-card">
-                        <div class="tip-icon">🏃</div>
-                        <div class="tip-label">Ejercicio</div>
-                        <div class="tip-desc">30 min recomendados</div>
+                <!-- Recomendaciones IA -->
+                <div class="section-label full">✨ Recomendaciones personalizadas</div>
+                <div class="habitos-tips" id="tips-container">
+                    <div class="tip-card loading">
+                        <div class="tip-icon">⏳</div>
+                        <div class="tip-label">Cargando...</div>
+                        <div class="tip-desc">Generando con IA</div>
                     </div>
-                    <div class="tip-card">
-                        <div class="tip-icon">💧</div>
-                        <div class="tip-label">Agua</div>
-                        <div class="tip-desc">8 vasos al día</div>
+                    <div class="tip-card loading">
+                        <div class="tip-icon">⏳</div>
+                        <div class="tip-label">Cargando...</div>
+                        <div class="tip-desc">para ti 🤖</div>
                     </div>
-                    <div class="tip-card">
-                        <div class="tip-icon">😴</div>
-                        <div class="tip-label">Sueño</div>
-                        <div class="tip-desc">7-9 horas ideales</div>
+                    <div class="tip-card loading">
+                        <div class="tip-icon">⏳</div>
+                        <div class="tip-label">Cargando...</div>
+                        <div class="tip-desc">un momento...</div>
                     </div>
                 </div>
 
@@ -376,6 +585,95 @@
         </form>
     </div>
 
+    <!-- Historial de hoy -->
+    <div class="historial-hoy">
+        <div class="historial-hoy-titulo">
+            📋 Registros de hoy
+            {% if total_hoy > 0 %}
+                <span>{{ total_hoy }} hábito{% if total_hoy != 1 %}s{% endif %}</span>
+            {% endif %}
+        </div>
+
+        {% if habitos_hoy %}
+            {% for r in habitos_hoy %}
+            <div class="habito-hoy-item">
+                <div class="habito-hoy-icono">
+                    {% if 'ejercicio' in r.habito.nombre|lower or 'caminar' in r.habito.nombre|lower %}🏃
+                    {% elif 'agua' in r.habito.nombre|lower %}💧
+                    {% elif 'sueño' in r.habito.nombre|lower %}😴
+                    {% elif 'meditaci' in r.habito.nombre|lower %}🧘
+                    {% elif 'lectura' in r.habito.nombre|lower %}📖
+                    {% elif 'estudio' in r.habito.nombre|lower %}📚
+                    {% else %}💪{% endif %}
+                </div>
+                <div class="habito-hoy-info">
+                    <div class="habito-hoy-nombre">{{ r.habito.nombre }}</div>
+                    <div class="habito-hoy-valor">{{ r.valor }} — {{ r.habito.tipo.nombre }}</div>
+                </div>
+                <div class="habito-hoy-check">✅</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-habitos-hoy">
+                😴 Aún no has registrado ningún hábito hoy
+            </div>
+        {% endif %}
+    </div>
+
 </div>
+
+<script>
+// Cargar recomendaciones de IA al abrir la página
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('{% url "recomendaciones_habitos" %}')
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('tips-container');
+            container.innerHTML = data.recomendaciones.map(r => `
+                <div class="tip-card">
+                    <div class="tip-icon">${r.titulo.split(' ')[0]}</div>
+                    <div class="tip-label">${r.titulo.split(' ').slice(1).join(' ')}</div>
+                    <div class="tip-desc">${r.descripcion}</div>
+                </div>
+            `).join('');
+        })
+        .catch(() => {
+            const container = document.getElementById('tips-container');
+            container.innerHTML = `
+                <div class="tip-card"><div class="tip-icon">💧</div><div class="tip-label">Hidratación</div><div class="tip-desc">8 vasos de agua al día</div></div>
+                <div class="tip-card"><div class="tip-icon">🏃</div><div class="tip-label">Ejercicio</div><div class="tip-desc">30 min diarios recomendados</div></div>
+                <div class="tip-card"><div class="tip-icon">😴</div><div class="tip-label">Sueño</div><div class="tip-desc">7-9 horas ideales</div></div>
+            `;
+        });
+});
+
+const hints = {
+    'Actividad Física': 'Ingresa los minutos de actividad',
+    'Salud': 'Ingresa la cantidad (vasos, horas, etc.)',
+    'Bienestar Mental': 'Ingresa los minutos de práctica',
+    'Aprendizaje': 'Ingresa los minutos dedicados',
+};
+
+function actualizarHint(select) {
+    const option = select.options[select.selectedIndex];
+    const tipo = option.getAttribute('data-tipo') || '';
+    const hint = document.getElementById('valor-hint');
+    const input = document.getElementById('input-valor');
+
+    hint.textContent = hints[tipo] || 'Ingresa la cantidad realizada';
+
+    // Placeholder dinámico según tipo
+    if (tipo === 'Salud' && option.text.toLowerCase().includes('agua')) {
+        input.placeholder = 'Ej: 8 vasos';
+        input.max = 20;
+    } else if (tipo === 'Salud') {
+        input.placeholder = 'Ej: 8 horas';
+        input.max = 24;
+    } else {
+        input.placeholder = 'Ej: 30 minutos';
+        input.max = 500;
+    }
+}
+</script>
 
 {% endblock %}

@@ -1,0 +1,62 @@
+[
+  {
+    "model": "bienestar.logro",
+    "pk": 1,
+    "fields": { "nombre": "primera_emocion", "descripcion": "Registraste tu primera emocion", "icono": "🌱", "categoria": "emocion", "condicion_valor": 1 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 2,
+    "fields": { "nombre": "cinco_emociones", "descripcion": "Registraste 5 emociones", "icono": "💚", "categoria": "emocion", "condicion_valor": 5 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 3,
+    "fields": { "nombre": "veinte_emociones", "descripcion": "Registraste 20 emociones", "icono": "🧠", "categoria": "emocion", "condicion_valor": 20 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 4,
+    "fields": { "nombre": "primer_habito", "descripcion": "Registraste tu primer habito", "icono": "⚡", "categoria": "habito", "condicion_valor": 1 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 5,
+    "fields": { "nombre": "diez_habitos", "descripcion": "Registraste 10 habitos", "icono": "💪", "categoria": "habito", "condicion_valor": 10 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 6,
+    "fields": { "nombre": "cincuenta_habitos", "descripcion": "Registraste 50 habitos", "icono": "🏆", "categoria": "habito", "condicion_valor": 50 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 7,
+    "fields": { "nombre": "primer_diario", "descripcion": "Escribiste tu primera entrada en el diario", "icono": "📓", "categoria": "diario", "condicion_valor": 1 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 8,
+    "fields": { "nombre": "cinco_diarios", "descripcion": "Escribiste 5 entradas en el diario", "icono": "✍️", "categoria": "diario", "condicion_valor": 5 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 9,
+    "fields": { "nombre": "racha_3_emociones", "descripcion": "3 dias seguidos registrando emociones", "icono": "🔥", "categoria": "racha", "condicion_valor": 3 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 10,
+    "fields": { "nombre": "racha_7_emociones", "descripcion": "7 dias seguidos registrando emociones", "icono": "⭐", "categoria": "racha", "condicion_valor": 7 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 11,
+    "fields": { "nombre": "racha_3_habitos", "descripcion": "3 dias seguidos registrando habitos", "icono": "🌟", "categoria": "racha", "condicion_valor": 3 }
+  },
+  {
+    "model": "bienestar.logro",
+    "pk": 12,
+    "fields": { "nombre": "racha_7_habitos", "descripcion": "7 dias seguidos registrando habitos", "icono": "🎯", "categoria": "racha", "condicion_valor": 7 }
+  }
+]

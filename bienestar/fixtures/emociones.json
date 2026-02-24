@@ -1,0 +1,52 @@
+[
+  {
+    "model": "bienestar.emocion",
+    "pk": 1,
+    "fields": { "nombre": "Feliz" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 2,
+    "fields": { "nombre": "Triste" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 3,
+    "fields": { "nombre": "Ansioso/a" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 4,
+    "fields": { "nombre": "Tranquilo/a" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 5,
+    "fields": { "nombre": "Emocionado/a" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 6,
+    "fields": { "nombre": "Angustiado/a" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 7,
+    "fields": { "nombre": "Decepcionado/a" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 8,
+    "fields": { "nombre": "Agradecido/a" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 9,
+    "fields": { "nombre": "Frustrado/a" }
+  },
+  {
+    "model": "bienestar.emocion",
+    "pk": 10,
+    "fields": { "nombre": "Esperanzado/a" }
+  }
+]
