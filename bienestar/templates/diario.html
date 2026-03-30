@@ -8,6 +8,29 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;1,400&display=swap');
 
+.entrada-acciones {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.btn-accion {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background 0.2s, transform 0.2s;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-accion.editar:hover { background: #e8f5ee; transform: scale(1.1); }
+.btn-accion.eliminar:hover { background: #fdecea; transform: scale(1.1); }
+
 .diario-wrapper {
     max-width: 780px;
     margin: 0 auto;
@@ -60,6 +83,111 @@
     font-size: 13px;
     color: rgba(255,255,255,0.75);
     margin: 0;
+}
+
+/* ===== BUSCADOR Y FILTROS ===== */
+.filtros-card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filtro-buscar {
+    flex: 1;
+    min-width: 180px;
+    position: relative;
+}
+
+.filtro-buscar input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.filtro-buscar input:focus {
+    outline: none;
+    border-color: #52b788;
+    box-shadow: 0 0 0 3px rgba(82,183,136,0.1);
+    background: white;
+}
+
+.filtro-buscar .icono-buscar {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.filtro-fecha {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filtro-fecha label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #888;
+    white-space: nowrap;
+}
+
+.filtro-fecha input[type="date"] {
+    padding: 9px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #fafafa;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.filtro-fecha input[type="date"]:focus {
+    outline: none;
+    border-color: #52b788;
+}
+
+.btn-limpiar-filtros {
+    padding: 9px 16px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    background: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #888;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-limpiar-filtros:hover {
+    background: #fdecea;
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.resultado-busqueda {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 12px;
+    display: none;
 }
 
 /* ===== FORMULARIO ===== */
@@ -192,6 +320,10 @@
     box-shadow: 0 8px 24px rgba(0,0,0,0.09);
 }
 
+.entrada-card.oculta {
+    display: none;
+}
+
 .entrada-meta {
     display: flex;
     align-items: center;
@@ -284,6 +416,19 @@
     margin: 0;
 }
 
+.sin-resultados {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+    background: white;
+    border-radius: 18px;
+    color: #bbb;
+    font-family: 'DM Sans', sans-serif;
+}
+
+.sin-resultados .icon { font-size: 40px; margin-bottom: 10px; }
+.sin-resultados p { font-size: 14px; margin: 0; }
+
 /* Toast */
 .toast {
     position: fixed;
@@ -307,6 +452,12 @@
     background: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
+}
+
+mark {
+    background: #fff3cd;
+    border-radius: 3px;
+    padding: 0 2px;
 }
 </style>
 {% endblock %}
@@ -343,7 +494,6 @@
             <h3>✍️ Nueva entrada</h3>
             <span class="diario-fecha" id="fecha-entrada"></span>
         </div>
-
         <form method="POST">
             {% csrf_token %}
             <textarea
@@ -353,7 +503,6 @@
                 placeholder="Escribe libremente… ¿Cómo fue tu día? ¿Qué sientes? ¿Qué aprendiste hoy?"
                 required
                 oninput="updateCount(this)"></textarea>
-
             <div class="diario-form-footer">
                 <span class="char-count" id="char-count">0 caracteres</span>
                 <button type="submit" class="btn-guardar-diario">💾 Guardar entrada</button>
@@ -361,33 +510,65 @@
         </form>
     </div>
 
+    <!-- Buscador y filtros -->
+    {% if entradas %}
+    <div class="filtros-card">
+        <div class="filtro-buscar">
+            <span class="icono-buscar">🔍</span>
+            <input type="text" id="buscador" placeholder="Buscar en mis entradas…" oninput="filtrar()">
+        </div>
+        <div class="filtro-fecha">
+            <label>Desde</label>
+            <input type="date" id="fecha-desde" onchange="filtrar()">
+        </div>
+        <div class="filtro-fecha">
+            <label>Hasta</label>
+            <input type="date" id="fecha-hasta" onchange="filtrar()">
+        </div>
+        <button class="btn-limpiar-filtros" onclick="limpiarFiltros()">✕ Limpiar</button>
+    </div>
+    <p class="resultado-busqueda" id="resultado-busqueda"></p>
+    {% endif %}
+
     <!-- Entradas anteriores -->
     <div class="entradas-section">
         <h2>
             Entradas anteriores
             {% if entradas %}
-                <span>{{ entradas|length }} entradas</span>
+                <span id="contador-entradas">{{ entradas|length }} entradas</span>
             {% endif %}
         </h2>
 
         {% if entradas %}
             {% for entrada in entradas %}
-            <div class="entrada-card">
+            <div class="entrada-card"
+                 id="card-{{ forloop.counter }}"
+                 data-texto="{{ entrada.contenido|lower }}"
+                 data-fecha="{{ entrada.fecha|date:'Y-m-d' }}">
                 <div class="entrada-meta">
                     <div class="entrada-avatar">📝</div>
                     <div class="entrada-info">
                         <div class="entrada-fecha">{{ entrada.fecha|date:"l, d \d\e F \d\e Y" }}</div>
                         <div class="entrada-hora">{{ entrada.fecha|date:"H:i" }} hrs</div>
                     </div>
+                    <div class="entrada-acciones">
+                        <button class="btn-accion editar" onclick="abrirEditar({{ entrada.pk }}, `{{ entrada.contenido|escapejs }}`)">✏️</button>
+                        <button class="btn-accion eliminar" onclick="abrirEliminar({{ entrada.pk }})">🗑️</button>
+                    </div>
                 </div>
                 <div class="entrada-texto truncado" id="texto-{{ forloop.counter }}">{{ entrada.contenido }}</div>
                 {% if entrada.contenido|length > 200 %}
-                <button class="btn-ver-mas" onclick="toggleTexto({{ forloop.counter }}, this)">
-                    Ver más ↓
-                </button>
+                <button class="btn-ver-mas" onclick="toggleTexto({{ forloop.counter }}, this)">Ver más ↓</button>
                 {% endif %}
             </div>
             {% endfor %}
+
+            <!-- Mensaje sin resultados (filtro) -->
+            <div class="sin-resultados" id="sin-resultados">
+                <div class="icon">🔎</div>
+                <p>No se encontraron entradas con ese criterio.</p>
+            </div>
+
         {% else %}
             <div class="no-entradas">
                 <div class="icon">📭</div>
@@ -398,8 +579,53 @@
 
 </div>
 
+<!-- Modal Editar -->
+<div id="modal-editar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:20px; padding:30px; width:90%; max-width:560px; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <h3 style="font-family:'Playfair Display',serif; color:#2d6a4f; margin:0 0 16px;">✏️ Editar entrada</h3>
+        <form method="POST" id="form-editar">
+            {% csrf_token %}
+            <textarea id="textarea-editar" name="contenido"
+                style="width:100%; min-height:150px; border:1.5px solid #e0e0e0; border-radius:14px; padding:16px; font-family:'Lora',serif; font-size:15px; line-height:1.7; resize:vertical; box-sizing:border-box;"
+                required></textarea>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+                <button type="button" onclick="cerrarModales()"
+                    style="padding:10px 22px; border-radius:12px; border:1.5px solid #ddd; background:white; cursor:pointer; font-family:'DM Sans',sans-serif; color:#000;">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    style="padding:10px 22px; border-radius:12px; border:none; background:linear-gradient(135deg,#2d6a4f,#52b788); color:white; font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer;">
+                    Guardar cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Eliminar -->
+<div id="modal-eliminar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:20px; padding:30px; width:90%; max-width:420px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="font-size:48px; margin-bottom:12px;">🗑️</div>
+        <h3 style="font-family:'Playfair Display',serif; color:#333; margin:0 0 8px;">¿Eliminar esta entrada?</h3>
+        <p style="font-family:'DM Sans',sans-serif; font-size:14px; color:#888; margin:0 0 24px;">Esta acción no se puede deshacer.</p>
+        <form method="POST" id="form-eliminar">
+            {% csrf_token %}
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button type="button" onclick="cerrarModales()"
+                    style="padding:10px 22px; border-radius:12px; border:1.5px solid #ddd; background:white; cursor:pointer; font-family:'DM Sans',sans-serif; color:#000;">
+                    Cancelar
+                </button>
+                <button type="submit"
+                    style="padding:10px 22px; border-radius:12px; border:none; background:#e74c3c; color:white; font-family:'DM Sans',sans-serif; font-weight:600; cursor:pointer;">
+                    Sí, eliminar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-    // Fecha en el formulario
+    // Fecha en formulario
     const ahora = new Date();
     document.getElementById('fecha-entrada').textContent =
         ahora.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -419,6 +645,108 @@
             el.classList.add('truncado');
             btn.textContent = 'Ver más ↓';
         }
+    }
+
+    // Modales
+    function abrirEditar(pk, contenido) {
+        document.getElementById('form-editar').action = `/diario/${pk}/editar/`;
+        document.getElementById('textarea-editar').value = contenido;
+        document.getElementById('modal-editar').style.display = 'flex';
+    }
+
+    function abrirEliminar(pk) {
+        document.getElementById('form-eliminar').action = `/diario/${pk}/eliminar/`;
+        document.getElementById('modal-eliminar').style.display = 'flex';
+    }
+
+    function cerrarModales() {
+        document.getElementById('modal-editar').style.display = 'none';
+        document.getElementById('modal-eliminar').style.display = 'none';
+    }
+
+    ['modal-editar', 'modal-eliminar'].forEach(id => {
+        document.getElementById(id).addEventListener('click', function(e) {
+            if (e.target === this) cerrarModales();
+        });
+    });
+
+    // ===== BUSCADOR + FILTRO POR FECHA =====
+    function filtrar() {
+        const texto = document.getElementById('buscador').value.toLowerCase().trim();
+        const desde = document.getElementById('fecha-desde').value;
+        const hasta = document.getElementById('fecha-hasta').value;
+        const cards = document.querySelectorAll('.entrada-card');
+        const sinResultados = document.getElementById('sin-resultados');
+        const resultadoEl = document.getElementById('resultado-busqueda');
+        const contadorEl = document.getElementById('contador-entradas');
+
+        let visibles = 0;
+
+        cards.forEach(card => {
+            const cardTexto = card.dataset.texto || '';
+            const cardFecha = card.dataset.fecha || '';
+
+            const coincideTexto = texto === '' || cardTexto.includes(texto);
+            const coincideDesde = desde === '' || cardFecha >= desde;
+            const coincideHasta = hasta === '' || cardFecha <= hasta;
+
+            if (coincideTexto && coincideDesde && coincideHasta) {
+                card.classList.remove('oculta');
+                // Resaltar texto buscado
+                if (texto !== '') {
+                    resaltarTexto(card, texto);
+                } else {
+                    quitarResaltado(card);
+                }
+                visibles++;
+            } else {
+                card.classList.add('oculta');
+            }
+        });
+
+        // Mostrar/ocultar mensaje sin resultados
+        if (sinResultados) {
+            sinResultados.style.display = visibles === 0 ? 'block' : 'none';
+        }
+
+        // Actualizar contador
+        if (contadorEl) {
+            contadorEl.textContent = visibles + ' entrada' + (visibles !== 1 ? 's' : '');
+        }
+
+        // Mostrar texto de resultado
+        const hayFiltros = texto !== '' || desde !== '' || hasta !== '';
+        if (resultadoEl) {
+            if (hayFiltros) {
+                resultadoEl.style.display = 'block';
+                resultadoEl.textContent = `Mostrando ${visibles} resultado${visibles !== 1 ? 's' : ''}`;
+            } else {
+                resultadoEl.style.display = 'none';
+            }
+        }
+    }
+
+    function resaltarTexto(card, busqueda) {
+        const divTexto = card.querySelector('.entrada-texto');
+        if (!divTexto) return;
+        const original = divTexto.getAttribute('data-original') || divTexto.textContent;
+        divTexto.setAttribute('data-original', original);
+        const regex = new RegExp(`(${busqueda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        divTexto.innerHTML = original.replace(regex, '<mark>$1</mark>');
+    }
+
+    function quitarResaltado(card) {
+        const divTexto = card.querySelector('.entrada-texto');
+        if (!divTexto) return;
+        const original = divTexto.getAttribute('data-original');
+        if (original) divTexto.textContent = original;
+    }
+
+    function limpiarFiltros() {
+        document.getElementById('buscador').value = '';
+        document.getElementById('fecha-desde').value = '';
+        document.getElementById('fecha-hasta').value = '';
+        filtrar();
     }
 </script>
 

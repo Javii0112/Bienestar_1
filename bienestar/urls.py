@@ -20,4 +20,6 @@ urlpatterns = [
     path('limpiar-logros/', views.limpiar_logros_sesion, name='limpiar_logros_sesion'),
     path('mensajes/', mensajes_view, name='mensajes'),
     path('habitos/recomendaciones/', views.recomendaciones_habitos, name='recomendaciones_habitos'),
+    path("diario/<int:pk>/editar/", views.diario_editar, name="diario_editar"),
+    path("diario/<int:pk>/eliminar/", views.diario_eliminar, name="diario_eliminar"),
 ]

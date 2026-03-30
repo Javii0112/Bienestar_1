@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
 from django.contrib import messages
@@ -450,6 +450,24 @@ def diario(request):
     entradas = Diario.objects.filter(usuario=request.user).order_by('-fecha')
     return render(request, 'diario.html', {"entradas": entradas})
 
+@login_required
+def diario_editar(request, pk):
+    entrada = get_object_or_404(Diario, pk=pk, usuario=request.user)
+    if request.method == 'POST':
+        contenido = request.POST.get('contenido')
+        if contenido:
+            entrada.contenido = contenido
+            entrada.save()
+            messages.success(request, "¡Entrada actualizada! ✏️", extra_tags='diario')
+    return redirect('diario')
+
+@login_required
+def diario_eliminar(request, pk):
+    entrada = get_object_or_404(Diario, pk=pk, usuario=request.user)
+    if request.method == 'POST':
+        entrada.delete()
+        messages.success(request, "Entrada eliminada 🗑️", extra_tags='diario')
+    return redirect('diario')
 
 # ==================================================
 # PERFIL
