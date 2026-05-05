@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block title %}Dashboard | Bienestar Campus{% endblock %}
-
 {% block page_name %}Inicio{% endblock %}
 
 {% block content %}
@@ -9,56 +8,84 @@
 <!-- ===== BANNER ===== -->
 <div class="banner">
     <h2>"Cada día es una nueva oportunidad"</h2>
-    <p>Recuerda: tu bienestar es una prioridad 💚</p>
+    <p>Tu bienestar es una prioridad 💚</p>
 </div>
 
-<!-- ===== GRID ===== -->
-<div class="grid">
-    <!-- REGISTRO EMOCIÓN -->
-    <div class="card">
-        <h3>🧠 Registro de Emoción</h3>
+<!-- ===== ACCIÓN PRINCIPAL ===== -->
+<div class="card card-main">
+    <h2>¿Cómo te sientes hoy?</h2>
 
-        <form method="post">
-            {% csrf_token %}
+    <form method="post">
+        {% csrf_token %}
 
-            <label>Emoción</label>
-            <select name="emocion" required>
-                <option value="">Selecciona una emoción</option>
+        <!-- EMOCIÓN -->
+        <div class="form-group">
+            <label>Selecciona tu emoción</label>
+
+            <div class="emociones-grid">
                 {% for emocion in emociones %}
-                    <option value="{{ emocion.id }}">{{ emocion.nombre }}</option>
+                    <label class="emocion-option">
+                        <input type="radio" name="emocion" value="{{ emocion.id }}" required>
+
+                        <div class="emocion-content">
+                            <div class="emoji">{{ emocion.emoji|default:"🙂" }}</div>
+                            <span class="emocion-texto">{{ emocion.nombre }}</span>
+                        </div>
+                    </label>
                 {% endfor %}
-            </select>
+            </div>
 
-            <label>Intensidad (1 a 5)</label>
-            <select name="intensidad" required>
-                <option value="">Selecciona intensidad</option>
-                <option value="1">1 - Muy leve</option>
-                <option value="2">2 - Leve</option>
-                <option value="3">3 - Moderada</option>
-                <option value="4">4 - Intensa</option>
-                <option value="5">5 - Muy intensa</option>
-            </select>
+            <!-- BOTÓN BIEN UBICADO -->
+            <div style="margin-top:15px;">
+                <a href="{% url 'lista_emociones' %}" class="btn-gestion">
+                    ⚙️ Gestionar emociones
+                </a>
+            </div>
 
-            <label>Cuéntanos un poco más</label>
-            <textarea name="descripcion" rows="3" placeholder="¿Qué está pasando hoy?"></textarea>
+        </div>
 
-            <button type="submit" name="guardar_emocion" value="1">Guardar emoción</button>
-        </form>
-    </div>
+        <!-- INTENSIDAD -->
+        <div class="form-group">
+            <label>¿Qué tan intensa es?</label>
+            <div class="intensidad-grid">
+                {% for i in "12345" %}
+                    <label class="intensidad-option">
+                        <input type="radio" name="intensidad" value="{{ forloop.counter }}" required>
+                        <span>{{ forloop.counter }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- DESCRIPCIÓN -->
+        <div class="form-group">
+            <textarea name="descripcion" rows="2" placeholder="¿Quieres contar algo más? (opcional)"></textarea>
+        </div>
+
+        <button type="submit" name="guardar_emocion" value="1" class="btn-main">
+            Guardar emoción
+        </button>
+    </form>
+</div>
+
+<!-- ===== GRID SECUNDARIO ===== -->
+<div class="grid-2">
 
     <!-- RESUMEN -->
     <div class="card">
-        <h3>📊 Resumen de Hoy</h3>
+        <h3>📊 Tu día</h3>
 
         {% if emocion_hoy %}
             <div class="resumen-item">
-                <span>🧠 Emoción</span>
-                <span>{{ emocion_hoy.emocion.nombre }} (intensidad {{ emocion_hoy.intensidad }}/5)</span>
+                <span>🧠</span>
+                <span>
+                    {{ emocion_hoy.emocion.emoji|default:"🙂" }}
+                    {{ emocion_hoy.emocion.nombre }} ({{ emocion_hoy.intensidad }}/5)
+                </span>
             </div>
         {% else %}
-            <div class="resumen-item">
-                <span>🧠 Emoción</span>
-                <span style="color: #aaa;">Sin registrar aún</span>
+            <div class="resumen-item empty">
+                Aún no registras tu emoción hoy 💭
             </div>
         {% endif %}
 
@@ -70,56 +97,193 @@
             </div>
             {% endfor %}
         {% else %}
-            <div class="resumen-item">
-                <span>💪 Hábitos</span>
-                <span style="color: #aaa;">Sin registrar aún</span>
+            <div class="resumen-item empty">
+                No has registrado hábitos hoy
             </div>
-        {% endif %}
-
-        {% if todas_emociones %}
-        <button onclick="document.getElementById('historial').style.display = document.getElementById('historial').style.display === 'none' ? 'block' : 'none'"
-            style="margin-top: 12px; background: transparent; border: 1px solid #00796b; color: #00796b; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;">
-            📋 Ver historial de emociones
-        </button>
-
-        <div id="historial" style="display: none; margin-top: 12px;">
-            {% for reg in todas_emociones %}
-            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px;">
-                <span>{{ reg.emocion.nombre }}</span>
-                <span style="color: #888;">{{ reg.intensidad }}/5 · {{ reg.fecha|date:"d/m H:i" }}</span>
-            </div>
-            {% endfor %}
-        </div>
         {% endif %}
 
         <a href="{% url 'habitos' %}">
-            <button class="btn-habitos">Registrar más hábitos</button>
+            <button class="btn-secondary">Registrar hábitos</button>
         </a>
     </div>
 
-</div> <!-- cierre div.grid -->
+    <!-- ACCESOS -->
+    <div class="card">
+        <h3>⚡ Accesos rápidos</h3>
+
+        <div class="accesos-grid">
+            <a href="{% url 'diario' %}" class="acceso">📔 Escribir diario</a>
+            <a href="{% url 'habitos' %}" class="acceso">💪 Hábitos</a>
+            <a href="{% url 'estadistica' %}" class="acceso">📊 Estadísticas</a>
+            <a href="{% url 'lista_emociones' %}" class="acceso acceso-gestion">
+                ⚙️ Gestionar emociones
+            </a>
+        </div>
+    </div>
+
+</div>
 
 <!-- ===== ACTIVIDADES ===== -->
 <div class="actividades">
-    <h3>✨ Actividades recomendadas para ti</h3>
+    <h3>✨ Recomendado para ti</h3>
 
     <div class="actividades-grid">
-        <div class="actividad act1">🧘 Meditación<br><small>5 min respiración</small></div>
-        <div class="actividad act2">✍️ Escribe<br><small>Expresa tus ideas</small></div>
+        <div class="actividad act1">🧘 Meditación<br><small>Respira 5 min</small></div>
+        <div class="actividad act2">✍️ Escribe<br><small>Suelta lo que sientes</small></div>
         <div class="actividad act3">🚶 Camina<br><small>15 min al aire libre</small></div>
     </div>
 </div>
 
-<!-- ===== ACCESOS ===== -->
-<div class="accesos">
-    <a href="{% url 'estadistica' %}" style="text-decoration: none; color: inherit;">
-        <div class="acceso">📊 Ver Estadísticas</div>
-    </a>
-    <a href="{% url 'diario' %}" style="text-decoration: none; color: inherit;">
-        <div class="acceso">📔 Mi Diario</div>
-    </a>
-    <div class="acceso">📚 Recursos</div>
-    <div class="acceso">🏆 Mis Logros</div>
-</div>
+<!-- ===== ESTILOS ===== -->
+<style>
+
+/* BLOQUE PRINCIPAL */
+.card-main {
+    max-width: 1000px;
+    margin: 0 auto 30px;
+    text-align: center;
+}
+
+/* GRID EMOCIONES */
+.emociones-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+/* TARJETA EMOCIÓN */
+.emocion-option input {
+    display: none;
+}
+
+.emocion-content {
+    background: #c0ebe2;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+
+    height: 90px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    padding: 10px;
+}
+
+.emocion-content:hover {
+    background: #54d0b5;
+}
+
+.emocion-option input:checked + .emocion-content {
+    background: #009688;
+    color: white;
+    transform: scale(1.03);
+}
+
+/* EMOJI */
+.emoji {
+    font-size: 26px;
+}
+
+/* TEXTO */
+.emocion-texto {
+    font-size: 13px;
+    text-align: center;
+}
+
+/* BOTÓN GESTIÓN */
+.btn-gestion {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: #fff3e0;
+    border: 1px solid #ff9800;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+}
+
+.btn-gestion:hover {
+    background: #ffe0b2;
+}
+
+/* INTENSIDAD */
+.intensidad-grid {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.intensidad-option {
+    background: #f1f5f4;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.intensidad-option input {
+    display: none;
+}
+
+.intensidad-option input:checked + span {
+    font-weight: bold;
+    color: #00796b;
+}
+
+/* GRID SECUNDARIO */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* ACCESOS */
+.accesos-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.acceso {
+    background: #f5f5f5;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    transition: 0.2s;
+}
+
+.acceso:hover {
+    background: #e8f5f3;
+}
+
+/* BOTONES */
+.btn-main {
+    background: #00796b;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+    width: 100%;
+}
+
+.btn-secondary {
+    margin-top: 15px;
+    background: #6c63ff;
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+/* TEXTO VACÍO */
+.resumen-item.empty {
+    color: #888;
+    font-style: italic;
+}
+
+</style>
 
 {% endblock %}

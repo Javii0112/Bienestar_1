@@ -499,6 +499,54 @@
                 100% { transform: scale(1); }
             }
         }
+
+                /* ===== MENSAJES ===== */
+        .messages {
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* ERROR */
+        .alert.error {
+            background: #fdecea;
+            color: #c62828;
+            border-left: 5px solid #e53935;
+        }
+
+        /* SUCCESS */
+        .alert.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 5px solid #43a047;
+        }
+
+        /* INFO */
+        .alert.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 5px solid #1e88e5;
+        }
+
+        /* ANIMACIÓN */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -579,6 +627,17 @@
 
     <!-- CONTENIDO -->
     <div class="container">
+        <!--MENSAJES-->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert {{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         {% block content %}{% endblock %}
     </div>
 

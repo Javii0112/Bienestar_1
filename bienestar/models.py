@@ -86,6 +86,7 @@ class Perfil(models.Model):
 
 class Emocion(models.Model):
     nombre = models.CharField(max_length=100)
+    emoji = models.CharField(max_length=5, blank=True, null=True)
 
     def __str__(self):
         return self.nombre

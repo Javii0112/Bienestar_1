@@ -19,6 +19,9 @@ from .models import (
     LogroUsuario,
 )
 from .utils import verificar_logros
+from django.shortcuts import render, redirect, get_object_or_404
+#formularios
+from .forms import EmocionForm
 
 User = get_user_model()
 
@@ -175,7 +178,6 @@ def dashboard_view(request):
     hoy = date.today()
     emocion_hoy = RegistroEmocion.objects.filter(
         usuario=request.user,
-        fecha__date=hoy
     ).select_related('emocion').last()
 
     # Todas las emociones registradas (para el historial)
@@ -186,7 +188,6 @@ def dashboard_view(request):
     # Hábitos registrados hoy
     habitos_hoy = RegistroHabito.objects.filter(
         usuario=request.user,
-        fecha=hoy
     ).select_related('habito').order_by('-id')
 
     return render(request, "dashboard.html", {
@@ -196,6 +197,43 @@ def dashboard_view(request):
         "habitos_hoy": habitos_hoy,
     })
 
+@login_required
+def lista_emociones(request):
+    emociones = Emocion.objects.all()
+    return render(request, "lista_emociones.html", {"emociones": emociones})
+
+def crear_emocion(request):
+    form = EmocionForm(request.POST or None)
+
+    if form.is_valid():
+        form.save()
+        return redirect('lista_emociones')
+
+    return render(request, 'form.html', {'form': form})
+
+def editar_emocion(request, id):
+    emocion = get_object_or_404(Emocion, id=id)
+    form = EmocionForm(request.POST or None, instance=emocion)
+
+    if form.is_valid():
+        form.save()
+        return redirect('lista_emociones')
+
+    return render(request, 'form.html', {'form': form})
+
+def eliminar_emocion(request, id):
+    emocion = get_object_or_404(Emocion, id=id)
+
+    if request.method == "POST":
+
+        # 🔒 VALIDACIÓN PRO
+        if RegistroEmocion.objects.filter(emocion=emocion).exists():
+            messages.error(request, "❌ No puedes eliminar esta emoción porque ya ha sido utilizada")
+        else:
+            emocion.delete()
+            messages.success(request, "✅ Emoción eliminada correctamente")
+
+    return redirect('lista_emociones')
 
 # ==================================================
 # HÁBITOS

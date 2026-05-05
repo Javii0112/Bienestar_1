@@ -22,4 +22,9 @@ urlpatterns = [
     path('habitos/recomendaciones/', views.recomendaciones_habitos, name='recomendaciones_habitos'),
     path("diario/<int:pk>/editar/", views.diario_editar, name="diario_editar"),
     path("diario/<int:pk>/eliminar/", views.diario_eliminar, name="diario_eliminar"),
+    # CRUD de emociones
+    path('emociones/', views.lista_emociones, name='lista_emociones'),
+    path('emociones/nueva/', views.crear_emocion, name='crear_emocion'),
+    path('emociones/editar/<int:id>/', views.editar_emocion, name='editar_emocion'),
+    path('emociones/eliminar/<int:id>/', views.eliminar_emocion, name='eliminar_emocion'),
 ]

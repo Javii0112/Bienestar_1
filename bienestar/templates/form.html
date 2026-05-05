@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="form-page">
+
+    <!-- HEADER -->
+    <div class="form-header">
+        <h2>
+            {% if form.instance.id %}
+                ✏️ Editar emoción
+            {% else %}
+                ➕ Nueva emoción
+            {% endif %}
+        </h2>
+        <p>Personaliza cómo quieres registrar tus emociones</p>
+    </div>
+
+    <!-- CARD -->
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- NOMBRE -->
+            <div class="form-group">
+                <label>Nombre</label>
+                {{ form.nombre }}
+            </div>
+
+            <!-- EMOJI -->
+            <div class="form-group">
+                <label>Emoji</label>
+
+                <div class="emoji-wrapper">
+                    {{ form.emoji }}
+
+                    <button type="button" class="emoji-btn" onclick="togglePicker(event)">
+                        😀
+                    </button>
+
+                    <!-- PICKER FLOTANTE -->
+                    <div class="emoji-popup" id="emoji-popup">
+                        <emoji-picker id="picker"></emoji-picker>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTONES -->
+            <div class="form-actions">
+                <a href="{% url 'lista_emociones' %}" class="btn-cancelar">
+                    Cancelar
+                </a>
+
+                <button type="submit" class="btn-main">
+                    {% if form.instance.id %}
+                        Guardar cambios
+                    {% else %}
+                        Crear emoción
+                    {% endif %}
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+
+<!-- ===== ESTILOS ===== -->
+<style>
+
+/* CONTENEDOR */
+.form-page {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* HEADER */
+.form-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.form-header h2 {
+    margin-bottom: 5px;
+}
+
+.form-header p {
+    color: #777;
+    font-size: 14px;
+}
+
+/* CARD */
+.form-card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid #eee;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+/* INPUTS */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+/* INPUT DJANGO */
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: #00796b;
+}
+
+/* TEXTO AYUDA */
+.form-group small {
+    color: #999;
+    font-size: 12px;
+}
+
+/* BOTONES */
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-main {
+    background: #00796b;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-cancelar {
+    text-decoration: none;
+    color: #777;
+}
+
+.btn-cancelar:hover {
+    text-decoration: underline;
+}
+
+/* CONTENEDOR */
+.emoji-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* INPUT */
+.emoji-wrapper input {
+    flex: 1;
+}
+
+/* BOTÓN */
+.emoji-btn {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 18px;
+    border-radius: 10px;
+    background: #f1f5f4;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.emoji-btn:hover {
+    background: #e0f2f1;
+    transform: scale(1.05);
+}
+
+/* POPUP */
+.emoji-popup {
+    position: absolute;
+    top: 110%;
+    right: 0;
+    z-index: 999;
+
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    pointer-events: none;
+
+    transition: all 0.25s ease;
+}
+
+/* ACTIVO */
+.emoji-popup.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* PICKER */
+emoji-picker {
+    width: 320px;
+    height: 400px;
+
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    border: none;
+}
+
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js" type="module"></script>
+
+<script>
+const picker = document.getElementById('picker');
+const input = document.getElementById('emoji-input');
+const popup = document.getElementById('emoji-popup');
+
+function togglePicker(e) {
+    e.stopPropagation();
+    popup.classList.toggle('active');
+}
+
+// seleccionar emoji
+picker.addEventListener('emoji-click', event => {
+    input.value = event.detail.unicode;
+    popup.classList.remove('active');
+});
+
+// cerrar al hacer click fuera
+document.addEventListener('click', function(e) {
+    if (!popup.contains(e.target) && !e.target.classList.contains('emoji-btn')) {
+        popup.classList.remove('active');
+    }
+});
+</script>
+
+{% endblock %}
