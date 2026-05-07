@@ -2,7 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QListWidget, QListWidgetItem,
     QMessageBox, QFrame, QTabWidget, QTextEdit,
-    QSplitter, QScrollArea, QLineEdit, QDateEdit,
+    QSplitter, QLineEdit, QDateEdit,
     QFileDialog
 )
 from PySide6.QtCore import Qt, QThread, Signal, QSize, QDate
@@ -16,6 +16,7 @@ from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from datetime import date
 
 pg.setConfigOption('background', '#ffffff')
 pg.setConfigOption('foreground', '#2d4a38')
@@ -122,17 +123,21 @@ class WorkerCrearNota(QThread):
 # ══════════════════════════════════════════════════
 
 class DashboardWindow(QWidget):
-    def __init__(self):
+    def __init__(self, rol: str = "psicologa", nombre: str = ""):
         super().__init__()
-        self.setWindowTitle("Bienestar Campus — Panel Psicólogo")
-        self.setMinimumSize(900, 620)
+        self.rol    = rol      # "admin" | "psicologa"
+        self.nombre = nombre
+
+        titulo_ventana = "Bienestar Campus — Administrador" if rol == "admin" else "Bienestar Campus — Psicóloga"
+        self.setWindowTitle(titulo_ventana)
+        self.setMinimumSize(980, 640)
         self.setStyleSheet(STYLE_GLOBAL + STYLE_EXTRA)
 
         self.alumno_seleccionado_id = None
         self.workers = []
-        self._todos_alumnos   = []  # cache para el buscador
-        self._todas_emociones = []  # cache para filtro por fecha
-        self._todos_habitos   = []  # cache para filtro por fecha
+        self._todos_alumnos   = []
+        self._todas_emociones = []
+        self._todos_habitos   = []
 
         self._build_ui()
 
@@ -154,14 +159,41 @@ class DashboardWindow(QWidget):
         logo = QLabel("🌿  Bienestar Campus")
         logo.setObjectName("topbar_titulo")
 
+        # Saludo con nombre y rol
+        rol_label = "👤 Admin" if self.rol == "admin" else "🧑‍⚕️ Psicóloga"
+        self.lbl_usuario = QLabel(f"{rol_label}  ·  {self.nombre}")
+        self.lbl_usuario.setObjectName("topbar_usuario")
+
+        # Botón gestionar estudiantes — SOLO ADMIN
+        self.btn_estudiantes = QPushButton("👥  Gestionar Estudiantes")
+        self.btn_estudiantes.setObjectName("btn_primary")
+        self.btn_estudiantes.setFixedHeight(34)
+        self.btn_estudiantes.setCursor(Qt.PointingHandCursor)
+        self.btn_estudiantes.clicked.connect(self._abrir_gestion_estudiantes)
+        self.btn_estudiantes.setVisible(self.rol == "admin")
+
+        # Botón frases motivacionales — SOLO PSICÓLOGA
+        self.btn_frases = QPushButton("💬  Frases Motivacionales")
+        self.btn_frases.setObjectName("btn_secondary")
+        self.btn_frases.setFixedHeight(34)
+        self.btn_frases.setCursor(Qt.PointingHandCursor)
+        self.btn_frases.clicked.connect(self._abrir_gestion_frases)
+        self.btn_frases.setVisible(self.rol == "psicologa")
+
         self.btn_logout = QPushButton("Cerrar sesión")
-        self.btn_logout.setObjectName("btn_secondary")
-        self.btn_logout.setFixedWidth(130)
+        self.btn_logout.setObjectName("btn_logout")
+        self.btn_logout.setFixedWidth(120)
+        self.btn_logout.setFixedHeight(34)
         self.btn_logout.setCursor(Qt.PointingHandCursor)
         self.btn_logout.clicked.connect(self.cerrar_sesion)
 
         topbar_layout.addWidget(logo)
         topbar_layout.addStretch()
+        topbar_layout.addWidget(self.lbl_usuario)
+        topbar_layout.addSpacing(16)
+        topbar_layout.addWidget(self.btn_estudiantes)
+        topbar_layout.addWidget(self.btn_frases)
+        topbar_layout.addSpacing(12)
         topbar_layout.addWidget(self.btn_logout)
 
         # ── Splitter: sidebar + detalle ──────────
@@ -169,7 +201,7 @@ class DashboardWindow(QWidget):
         splitter.setObjectName("splitter")
         splitter.setHandleWidth(1)
 
-        # Sidebar — lista de alumnos
+        # Sidebar
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
         sidebar.setMinimumWidth(240)
@@ -193,6 +225,11 @@ class DashboardWindow(QWidget):
         sidebar_header.addStretch()
         sidebar_header.addWidget(self.btn_recargar)
 
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("🔍  Buscar alumno...")
+        self.search_input.setMinimumHeight(36)
+        self.search_input.textChanged.connect(self._filtrar_alumnos)
+
         self.lista_alumnos = QListWidget()
         self.lista_alumnos.setObjectName("lista_alumnos")
         self.lista_alumnos.itemClicked.connect(self.seleccionar_alumno)
@@ -202,30 +239,22 @@ class DashboardWindow(QWidget):
         self.lbl_status_lista.setAlignment(Qt.AlignCenter)
 
         sidebar_layout.addLayout(sidebar_header)
-
-        # ── Buscador ─────────────────────────────
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("🔍  Buscar alumno...")
-        self.search_input.setMinimumHeight(36)
-        self.search_input.textChanged.connect(self._filtrar_alumnos)
         sidebar_layout.addWidget(self.search_input)
-
         sidebar_layout.addWidget(self.lista_alumnos)
         sidebar_layout.addWidget(self.lbl_status_lista)
 
-        # Panel derecho — detalle del alumno
+        # Panel derecho
         self.panel_detalle = QFrame()
         self.panel_detalle.setObjectName("panel_detalle")
         detalle_layout = QVBoxLayout(self.panel_detalle)
         detalle_layout.setContentsMargins(24, 24, 24, 24)
         detalle_layout.setSpacing(16)
 
-        # Estado vacío
         self.lbl_vacio = QLabel("← Selecciona un alumno para ver su información")
         self.lbl_vacio.setObjectName("lbl_vacio")
         self.lbl_vacio.setAlignment(Qt.AlignCenter)
 
-        # Header del alumno seleccionado
+        # Header alumno
         self.alumno_header = QFrame()
         self.alumno_header.setObjectName("card")
         self.alumno_header.hide()
@@ -251,7 +280,6 @@ class DashboardWindow(QWidget):
         header_layout.addLayout(info_layout)
         header_layout.addStretch()
 
-        # Botón exportar PDF — fila separada
         self.btn_pdf = QPushButton("📄  Exportar PDF")
         self.btn_pdf.setObjectName("btn_secondary")
         self.btn_pdf.setFixedWidth(160)
@@ -283,7 +311,6 @@ class DashboardWindow(QWidget):
         detalle_layout.addWidget(self.btn_pdf)
         detalle_layout.addWidget(self.tabs)
 
-        # Ensamblar splitter
         splitter.addWidget(sidebar)
         splitter.addWidget(self.panel_detalle)
         splitter.setStretchFactor(1, 1)
@@ -291,22 +318,17 @@ class DashboardWindow(QWidget):
         root.addWidget(topbar)
         root.addWidget(splitter)
 
-        # Cargar alumnos al abrir
         self.cargar_alumnos()
 
-    def _make_list_tab(self):
-        widget = QListWidget()
-        widget.setObjectName("lista_alumnos")
-        return widget
-
+    # ──────────────────────────────────────────────
+    # Constructores de tabs
+    # ──────────────────────────────────────────────
     def _make_filtered_tab(self, on_filter):
-        """Crea un tab con filtro de fecha + lista."""
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(8)
 
-        # Fila de filtros
         filter_row = QHBoxLayout()
 
         lbl_desde = QLabel("Desde:")
@@ -353,7 +375,6 @@ class DashboardWindow(QWidget):
         layout.addLayout(filter_row)
         layout.addWidget(lista)
 
-        # Conectar botones
         btn_filtrar.clicked.connect(lambda: on_filter(
             date_desde.date().toString("yyyy-MM-dd"),
             date_hasta.date().toString("yyyy-MM-dd"),
@@ -364,13 +385,11 @@ class DashboardWindow(QWidget):
         return container, lista
 
     def _make_notas_tab(self):
-        """Crea el tab de notas del psicólogo."""
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(10)
 
-        # Lista de notas anteriores
         lbl = QLabel("Notas anteriores:")
         lbl.setObjectName("sidebar_titulo")
 
@@ -378,7 +397,6 @@ class DashboardWindow(QWidget):
         lista.setObjectName("lista_alumnos")
         lista.setMinimumHeight(160)
 
-        # Área para escribir nueva nota
         lbl_nueva = QLabel("Nueva nota:")
         lbl_nueva.setObjectName("sidebar_titulo")
 
@@ -402,7 +420,6 @@ class DashboardWindow(QWidget):
         return container, lista, texto_input, btn_guardar
 
     def _make_grafico_tab(self):
-        """Crea el tab del gráfico con pyqtgraph embebido."""
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(12, 12, 12, 12)
@@ -429,7 +446,7 @@ class DashboardWindow(QWidget):
         return widget
 
     # ──────────────────────────────────────────────
-    # Cargar lista de alumnos
+    # Cargar alumnos
     # ──────────────────────────────────────────────
     def cargar_alumnos(self):
         self.lista_alumnos.clear()
@@ -442,25 +459,25 @@ class DashboardWindow(QWidget):
             self.lbl_status_lista.setText("Error al cargar"),
             QMessageBox.critical(self, "Error", e)
         ))
-        w.finished.connect(lambda: self.btn_recargar.setEnabled(True))
-        w.error.connect(lambda: self.btn_recargar.setEnabled(True))
+        w.finished.connect(lambda _: self.btn_recargar.setEnabled(True))
+        w.error.connect(lambda _: self.btn_recargar.setEnabled(True))
         self.workers.append(w)
         w.start()
 
     def _poblar_alumnos(self, alumnos: list):
-        self._todos_alumnos = alumnos  # guardar para el buscador
+        self._todos_alumnos = alumnos
         self._renderizar_alumnos(alumnos)
         count = len(alumnos)
-        self.lbl_status_lista.setText(f"{count} alumno{'s' if count != 1 else ''} registrado{'s' if count != 1 else ''}")
+        self.lbl_status_lista.setText(f"{count} alumno{'s' if count != 1 else ''}")
 
     def _renderizar_alumnos(self, alumnos: list):
         self.lista_alumnos.clear()
         for alumno in alumnos:
             nombre  = f"{alumno.get('nombre', '')} {alumno.get('apellido', '')}".strip()
-            email   = alumno.get('email', '')
-            display = nombre if nombre else email
+            correo  = alumno.get('correo', alumno.get('email', ''))
+            display = nombre if nombre else correo
             item = QListWidgetItem(f"  {display}")
-            item.setData(Qt.UserRole, alumno.get('id'))
+            item.setData(Qt.UserRole, alumno)  # 👈 
             item.setSizeHint(QSize(0, 44))
             self.lista_alumnos.addItem(item)
 
@@ -471,7 +488,7 @@ class DashboardWindow(QWidget):
             return
         filtrados = [
             a for a in self._todos_alumnos
-            if texto in f"{a.get('nombre','')} {a.get('apellido','')} {a.get('email','')}".lower()
+            if texto in f"{a.get('nombre','')} {a.get('apellido','')} {a.get('correo', a.get('email',''))}".lower()
         ]
         self._renderizar_alumnos(filtrados)
 
@@ -489,33 +506,30 @@ class DashboardWindow(QWidget):
         self.tabs.show()
         self.btn_pdf.setEnabled(True)
 
-        # Cargar perfil
         w = WorkerPerfil(alumno_id)
         w.finished.connect(self._mostrar_perfil)
         w.error.connect(lambda e: QMessageBox.critical(self, "Error", e))
         self.workers.append(w)
         w.start()
 
-        # Pre-cargar emociones siempre (para el gráfico y el tab)
         w2 = WorkerEmociones(alumno_id)
         w2.finished.connect(self._poblar_emociones)
         w2.error.connect(lambda e: QMessageBox.critical(self, "Error", e))
         self.workers.append(w2)
         w2.start()
 
-        # Cargar el resto del tab activo si no es emociones
         idx = self.tabs.currentIndex()
         if idx != 0:
             self._cargar_tab_activa()
 
     def _mostrar_perfil(self, perfil: dict):
-        nombre   = f"{perfil.get('nombre', '')} {perfil.get('apellido', '')}".strip()
-        email    = perfil.get('email', '')
-        genero   = perfil.get('genero', '—')
-        edad     = perfil.get('edad', '—')
+        nombre = f"{perfil.get('nombre', '')} {perfil.get('apellido', '')}".strip()
+        correo = perfil.get('correo', perfil.get('email', ''))
+        genero = perfil.get('genero', '—')
+        edad   = perfil.get('edad', '—')
 
-        self.lbl_nombre_alumno.setText(nombre or email)
-        self.lbl_email_alumno.setText(f"✉  {email}")
+        self.lbl_nombre_alumno.setText(nombre or correo)
+        self.lbl_email_alumno.setText(f"✉  {correo}")
         self.lbl_meta_alumno.setText(f"Género: {genero}   ·   Edad: {edad} años")
 
     # ──────────────────────────────────────────────
@@ -537,7 +551,6 @@ class DashboardWindow(QWidget):
             w.error.connect(lambda e: QMessageBox.critical(self, "Error", e))
             self.workers.append(w)
             w.start()
-
         elif idx == 1:
             self.tab_habitos.clear()
             self.tab_habitos.addItem("  Cargando...")
@@ -546,7 +559,6 @@ class DashboardWindow(QWidget):
             w.error.connect(lambda e: QMessageBox.critical(self, "Error", e))
             self.workers.append(w)
             w.start()
-
         elif idx == 2:
             self.tab_diario.setText("Cargando...")
             w = WorkerDiario(aid)
@@ -554,10 +566,8 @@ class DashboardWindow(QWidget):
             w.error.connect(lambda e: QMessageBox.critical(self, "Error", e))
             self.workers.append(w)
             w.start()
-
         elif idx == 3:
             self._actualizar_grafico()
-
         elif idx == 4:
             self.notas_lista.clear()
             self.notas_lista.addItem("  Cargando...")
@@ -570,7 +580,6 @@ class DashboardWindow(QWidget):
     def _poblar_emociones(self, emociones: list):
         self._todas_emociones = emociones
         self._renderizar_emociones(emociones)
-        # Actualizar gráfico automáticamente con los nuevos datos
         self._actualizar_grafico()
 
     def _renderizar_emociones(self, emociones: list):
@@ -594,10 +603,7 @@ class DashboardWindow(QWidget):
         if desde is None:
             self._renderizar_emociones(self._todas_emociones)
             return
-        filtradas = [
-            e for e in self._todas_emociones
-            if desde <= e.get('fecha', '')[:10] <= hasta
-        ]
+        filtradas = [e for e in self._todas_emociones if desde <= e.get('fecha', '')[:10] <= hasta]
         self.tab_emociones.clear()
         if not filtradas:
             self.tab_emociones.addItem("  Sin registros en ese rango de fechas.")
@@ -615,7 +621,7 @@ class DashboardWindow(QWidget):
             self.tab_emociones.addItem(item)
 
     def _poblar_habitos(self, habitos: list):
-        self._todos_habitos = habitos  # guardar cache
+        self._todos_habitos = habitos
         self._renderizar_habitos(habitos)
 
     def _renderizar_habitos(self, habitos: list):
@@ -635,10 +641,7 @@ class DashboardWindow(QWidget):
         if desde is None:
             self._renderizar_habitos(self._todos_habitos)
             return
-        filtrados = [
-            h for h in self._todos_habitos
-            if desde <= h.get('fecha', '') <= hasta
-        ]
+        filtrados = [h for h in self._todos_habitos if desde <= h.get('fecha', '') <= hasta]
         self.tab_habitos.clear()
         if not filtrados:
             self.tab_habitos.addItem("  Sin registros en ese rango de fechas.")
@@ -668,26 +671,23 @@ class DashboardWindow(QWidget):
             self.notas_lista.addItem("  Sin notas registradas aún.")
             return
         for nota in notas:
-            fecha     = nota.get('fecha', '')[:10]
-            contenido = nota.get('contenido', '')
+            fecha      = nota.get('fecha', '')[:10]
+            contenido  = nota.get('contenido', '')
             respuestas = nota.get('respuestas', [])
 
-            # Nota del psicólogo
             item_nota = QListWidgetItem(f"  🧑‍⚕️ {fecha} — {contenido}")
             item_nota.setSizeHint(QSize(0, 44))
             self.notas_lista.addItem(item_nota)
 
-            # Respuestas del alumno
             for resp in respuestas:
-                fecha_r   = resp.get('fecha', '')[:10]
+                fecha_r     = resp.get('fecha', '')[:10]
                 contenido_r = resp.get('contenido', '')
-                nombre_r  = resp.get('alumno_nombre', 'Alumno')
-                item_resp = QListWidgetItem(f"      💬 {fecha_r} — {nombre_r}: {contenido_r}")
+                nombre_r    = resp.get('alumno_nombre', 'Alumno')
+                item_resp   = QListWidgetItem(f"      💬 {fecha_r} — {nombre_r}: {contenido_r}")
                 item_resp.setSizeHint(QSize(0, 40))
                 item_resp.setForeground(QColor('#2e9e62'))
                 self.notas_lista.addItem(item_resp)
 
-            # Separador visual
             sep = QListWidgetItem("  " + "─" * 40)
             sep.setForeground(QColor('#d4ead9'))
             sep.setFlags(Qt.NoItemFlags)
@@ -716,7 +716,6 @@ class DashboardWindow(QWidget):
     def _nota_guardada(self, nota: dict):
         self.notas_input.clear()
         self._reset_btn_nota()
-        # Recargar lista de notas
         w = WorkerNotas(self.alumno_seleccionado_id)
         w.finished.connect(self._poblar_notas)
         w.error.connect(lambda e: QMessageBox.critical(self, "Error", e))
@@ -726,6 +725,56 @@ class DashboardWindow(QWidget):
     def _reset_btn_nota(self):
         self.notas_btn.setEnabled(True)
         self.notas_btn.setText("💾  Guardar nota")
+
+    # ──────────────────────────────────────────────
+    # Abrir ventanas según rol
+    # ──────────────────────────────────────────────
+    def _abrir_gestion_estudiantes(self):
+        from vista_estudiantes import VistaEstudiantes
+        self.ventana_estudiantes = VistaEstudiantes()
+        self.ventana_estudiantes.show()
+
+    def _abrir_gestion_frases(self):
+        from vista_frases import VistaFrases
+        self.ventana_frases = VistaFrases()
+        self.ventana_frases.show()
+
+    # ──────────────────────────────────────────────
+    # Gráfico
+    # ──────────────────────────────────────────────
+    def _actualizar_grafico(self):
+        self.plot_widget.clear()
+
+        if not self._todas_emociones:
+            self.plot_widget.addItem(pg.TextItem(
+                text="Sin datos de emociones", color='#9ecfb5', anchor=(0.5, 0.5)
+            ))
+            return
+
+        nombres   = [e.get('emocion_nombre', 'Desconocida') for e in self._todas_emociones]
+        conteo    = Counter(nombres)
+        etiquetas = list(conteo.keys())
+        valores   = list(conteo.values())
+
+        colores = [
+            (46, 158, 98), (68, 184, 122), (94, 207, 146),
+            (125, 224, 170), (158, 239, 192), (26, 122, 74),
+        ]
+
+        for i, (etiqueta, valor) in enumerate(zip(etiquetas, valores)):
+            color = colores[i % len(colores)]
+            barra = pg.BarGraphItem(x=[i], height=[valor], width=0.6,
+                                    brush=pg.mkBrush(*color, 220),
+                                    pen=pg.mkPen('w', width=1))
+            self.plot_widget.addItem(barra)
+            texto = pg.TextItem(text=str(valor), color='#1a2e22', anchor=(0.5, 1))
+            texto.setPos(i, valor + 0.1)
+            self.plot_widget.addItem(texto)
+
+        eje_x = self.plot_widget.getAxis('bottom')
+        eje_x.setTicks([[(i, nombre) for i, nombre in enumerate(etiquetas)]])
+        self.plot_widget.setXRange(-0.5, len(etiquetas) - 0.5)
+        self.plot_widget.setYRange(0, max(valores) + 1)
 
     # ──────────────────────────────────────────────
     # Exportar PDF
@@ -738,7 +787,6 @@ class DashboardWindow(QWidget):
         )
         if not ruta:
             return
-
         try:
             self._generar_pdf(ruta, nombre)
             QMessageBox.information(self, "PDF exportado", f"Informe guardado en:\n{ruta}")
@@ -749,170 +797,88 @@ class DashboardWindow(QWidget):
         doc = SimpleDocTemplate(ruta, pagesize=A4,
                                 leftMargin=2*cm, rightMargin=2*cm,
                                 topMargin=2*cm, bottomMargin=2*cm)
+        styles  = getSampleStyleSheet()
+        verde   = colors.HexColor('#1a7a4a')
+        verde_c = colors.HexColor('#d6f0e3')
 
-        styles = getSampleStyleSheet()
-        verde  = colors.HexColor('#1a7a4a')
-        verde_claro = colors.HexColor('#d6f0e3')
-
-        estilo_titulo = ParagraphStyle('titulo', fontSize=20, textColor=verde,
-                                       fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=6)
-        estilo_sub    = ParagraphStyle('sub', fontSize=10, textColor=colors.HexColor('#6b8f77'),
-                                       alignment=TA_CENTER, spaceAfter=20)
-        estilo_seccion = ParagraphStyle('seccion', fontSize=13, textColor=verde,
-                                        fontName='Helvetica-Bold', spaceBefore=16, spaceAfter=8)
-        estilo_normal = ParagraphStyle('normal', fontSize=10, leading=16,
-                                       textColor=colors.HexColor('#1a2e22'), spaceAfter=4)
-        estilo_muted  = ParagraphStyle('muted', fontSize=9, textColor=colors.HexColor('#6b8f77'),
-                                       spaceAfter=12)
+        estilo_titulo  = ParagraphStyle('titulo',  fontSize=20, textColor=verde, fontName='Helvetica-Bold', alignment=TA_CENTER, spaceAfter=6)
+        estilo_sub     = ParagraphStyle('sub',     fontSize=10, textColor=colors.HexColor('#6b8f77'), alignment=TA_CENTER, spaceAfter=20)
+        estilo_seccion = ParagraphStyle('seccion', fontSize=13, textColor=verde, fontName='Helvetica-Bold', spaceBefore=16, spaceAfter=8)
+        estilo_normal  = ParagraphStyle('normal',  fontSize=10, leading=16, textColor=colors.HexColor('#1a2e22'), spaceAfter=4)
+        estilo_muted   = ParagraphStyle('muted',   fontSize=9,  textColor=colors.HexColor('#6b8f77'), spaceAfter=12)
 
         story = []
-
-        # ── Encabezado ───────────────────────────
         story.append(Paragraph("🌿 Bienestar Campus", estilo_titulo))
         story.append(Paragraph("Informe de seguimiento del alumno", estilo_sub))
-        story.append(HRFlowable(width="100%", thickness=1, color=verde_claro))
+        story.append(HRFlowable(width="100%", thickness=1, color=verde_c))
         story.append(Spacer(1, 0.4*cm))
 
-        # ── Datos del perfil ─────────────────────
         story.append(Paragraph("Datos del alumno", estilo_seccion))
-        email  = self.lbl_email_alumno.text().replace("✉  ", "")
-        meta   = self.lbl_meta_alumno.text()
+        email = self.lbl_email_alumno.text().replace("✉  ", "")
+        meta  = self.lbl_meta_alumno.text()
         story.append(Paragraph(f"<b>Nombre:</b> {nombre}", estilo_normal))
         story.append(Paragraph(f"<b>Email:</b> {email}", estilo_normal))
         story.append(Paragraph(f"<b>{meta}</b>", estilo_normal))
         story.append(Spacer(1, 0.3*cm))
 
-        # ── Emociones ────────────────────────────
-        story.append(HRFlowable(width="100%", thickness=0.5, color=verde_claro))
+        # Emociones
+        story.append(HRFlowable(width="100%", thickness=0.5, color=verde_c))
         story.append(Paragraph("Registro de emociones", estilo_seccion))
-
         if self._todas_emociones:
             data = [["Fecha", "Emoción", "Intensidad", "Comentario"]]
             for e in self._todas_emociones[:30]:
-                data.append([
-                    e.get('fecha', '')[:10],
-                    e.get('emocion_nombre', '—'),
-                    str(e.get('intensidad', '—')),
-                    e.get('comentario', '') or '—'
-                ])
+                data.append([e.get('fecha','')[:10], e.get('emocion_nombre','—'), str(e.get('intensidad','—')), e.get('comentario','') or '—'])
             tabla = Table(data, colWidths=[3*cm, 4*cm, 3*cm, 7*cm])
             tabla.setStyle(TableStyle([
-                ('BACKGROUND',  (0,0), (-1,0), verde),
-                ('TEXTCOLOR',   (0,0), (-1,0), colors.white),
-                ('FONTNAME',    (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE',    (0,0), (-1,-1), 9),
+                ('BACKGROUND', (0,0), (-1,0), verde), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'), ('FONTSIZE', (0,0), (-1,-1), 9),
                 ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f0f7f2')]),
-                ('GRID',        (0,0), (-1,-1), 0.5, colors.HexColor('#d4ead9')),
-                ('ALIGN',       (2,0), (2,-1), 'CENTER'),
-                ('VALIGN',      (0,0), (-1,-1), 'MIDDLE'),
-                ('TOPPADDING',  (0,0), (-1,-1), 5),
-                ('BOTTOMPADDING',(0,0), (-1,-1), 5),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#d4ead9')),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('TOPPADDING', (0,0), (-1,-1), 5), ('BOTTOMPADDING', (0,0), (-1,-1), 5),
             ]))
             story.append(tabla)
         else:
             story.append(Paragraph("Sin registros de emociones.", estilo_muted))
 
-        # ── Hábitos ──────────────────────────────
+        # Hábitos
         story.append(Spacer(1, 0.3*cm))
-        story.append(HRFlowable(width="100%", thickness=0.5, color=verde_claro))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=verde_c))
         story.append(Paragraph("Registro de hábitos", estilo_seccion))
-
         if self._todos_habitos:
             data = [["Fecha", "Hábito", "Valor"]]
             for h in self._todos_habitos[:30]:
-                data.append([
-                    h.get('fecha', ''),
-                    h.get('habito_nombre', '—'),
-                    str(h.get('valor', '—'))
-                ])
+                data.append([h.get('fecha',''), h.get('habito_nombre','—'), str(h.get('valor','—'))])
             tabla = Table(data, colWidths=[3*cm, 10*cm, 4*cm])
             tabla.setStyle(TableStyle([
-                ('BACKGROUND',  (0,0), (-1,0), verde),
-                ('TEXTCOLOR',   (0,0), (-1,0), colors.white),
-                ('FONTNAME',    (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE',    (0,0), (-1,-1), 9),
+                ('BACKGROUND', (0,0), (-1,0), verde), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'), ('FONTSIZE', (0,0), (-1,-1), 9),
                 ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.HexColor('#f0f7f2')]),
-                ('GRID',        (0,0), (-1,-1), 0.5, colors.HexColor('#d4ead9')),
-                ('ALIGN',       (2,0), (2,-1), 'CENTER'),
-                ('VALIGN',      (0,0), (-1,-1), 'MIDDLE'),
-                ('TOPPADDING',  (0,0), (-1,-1), 5),
-                ('BOTTOMPADDING',(0,0), (-1,-1), 5),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#d4ead9')),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'), ('TOPPADDING', (0,0), (-1,-1), 5), ('BOTTOMPADDING', (0,0), (-1,-1), 5),
             ]))
             story.append(tabla)
         else:
             story.append(Paragraph("Sin registros de hábitos.", estilo_muted))
 
-        # ── Diario ───────────────────────────────
+        # Diario
         story.append(Spacer(1, 0.3*cm))
-        story.append(HRFlowable(width="100%", thickness=0.5, color=verde_claro))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=verde_c))
         story.append(Paragraph("Entradas del diario", estilo_seccion))
-
-        # Obtener entradas del diario desde el QTextEdit
         texto_diario = self.tab_diario.toPlainText().strip()
-        if texto_diario and texto_diario != "Cargando..." and texto_diario != "Sin entradas en el diario.":
+        if texto_diario and texto_diario not in ("Cargando...", "Sin entradas en el diario."):
             for linea in texto_diario.split('\n'):
                 if linea.strip():
                     story.append(Paragraph(linea.replace('─', '-'), estilo_normal))
         else:
             story.append(Paragraph("Sin entradas en el diario.", estilo_muted))
 
-        # ── Pie de página ────────────────────────
         story.append(Spacer(1, 0.5*cm))
-        story.append(HRFlowable(width="100%", thickness=1, color=verde_claro))
-        from datetime import date
+        story.append(HRFlowable(width="100%", thickness=1, color=verde_c))
         story.append(Paragraph(
             f"Informe generado el {date.today().strftime('%d/%m/%Y')} · Bienestar Campus",
-            ParagraphStyle('pie', fontSize=8, textColor=colors.HexColor('#9ecfb5'),
-                           alignment=TA_CENTER, spaceBefore=8)
+            ParagraphStyle('pie', fontSize=8, textColor=colors.HexColor('#9ecfb5'), alignment=TA_CENTER, spaceBefore=8)
         ))
-
         doc.build(story)
-
-    def _actualizar_grafico(self):
-        """Dibuja el gráfico de frecuencia de emociones con pyqtgraph."""
-        self.plot_widget.clear()
-
-        if not self._todas_emociones:
-            self.plot_widget.addItem(pg.TextItem(
-                text="Sin datos de emociones",
-                color='#9ecfb5', anchor=(0.5, 0.5)
-            ))
-            return
-
-        # Contar frecuencia de cada emoción
-        nombres  = [e.get('emocion_nombre', 'Desconocida') for e in self._todas_emociones]
-        conteo   = Counter(nombres)
-        etiquetas = list(conteo.keys())
-        valores   = list(conteo.values())
-
-        # Colores verdes
-        colores = [
-            (46, 158, 98), (68, 184, 122), (94, 207, 146),
-            (125, 224, 170), (158, 239, 192), (26, 122, 74),
-            (58, 184, 112), (80, 200, 130)
-        ]
-
-        # Dibujar barras
-        for i, (etiqueta, valor) in enumerate(zip(etiquetas, valores)):
-            color = colores[i % len(colores)]
-            barra = pg.BarGraphItem(
-                x=[i], height=[valor], width=0.6,
-                brush=pg.mkBrush(*color, 220),
-                pen=pg.mkPen('w', width=1)
-            )
-            self.plot_widget.addItem(barra)
-
-            # Número encima de cada barra
-            texto = pg.TextItem(text=str(valor), color='#1a2e22', anchor=(0.5, 1))
-            texto.setPos(i, valor + 0.1)
-            self.plot_widget.addItem(texto)
-
-        # Etiquetas eje X
-        eje_x = self.plot_widget.getAxis('bottom')
-        eje_x.setTicks([[(i, nombre) for i, nombre in enumerate(etiquetas)]])
-
-        self.plot_widget.setXRange(-0.5, len(etiquetas) - 0.5)
-        self.plot_widget.setYRange(0, max(valores) + 1)
 
     # ──────────────────────────────────────────────
     # Cerrar sesión
@@ -926,59 +892,55 @@ class DashboardWindow(QWidget):
         if resp == QMessageBox.Yes:
             api_client.logout()
             from login import LoginWindow
-            self.login = LoginWindow()
-            self.login.show()
+            self.login_window = LoginWindow()
+            self.login_window.show()
             self.close()
 
 
 # ══════════════════════════════════════════════════
-# ESTILOS EXTRA (complementan styles.py)
+# ESTILOS EXTRA
 # ══════════════════════════════════════════════════
 STYLE_EXTRA = """
 QFrame#topbar {
     background-color: #ffffff;
     border-bottom: 1px solid #d4ead9;
 }
-
 QLabel#topbar_titulo {
     font-size: 16px;
     font-weight: bold;
     color: #1a7a4a;
 }
-
+QLabel#topbar_usuario {
+    font-size: 12px;
+    color: #6b8f77;
+}
 QFrame#sidebar {
     background-color: #f7fbf8;
     border-right: 1px solid #d4ead9;
 }
-
 QLabel#sidebar_titulo {
     font-size: 13px;
     font-weight: bold;
     color: #2d4a38;
 }
-
 QFrame#panel_detalle {
     background-color: #f0f7f2;
 }
-
 QLabel#lbl_vacio {
     color: #9ecfb5;
     font-size: 14px;
     font-style: italic;
 }
-
 QLabel#alumno_nombre {
     font-size: 16px;
     font-weight: bold;
     color: #1a2e22;
 }
-
 QTabWidget#tabs::pane {
     background-color: #ffffff;
     border: 1.5px solid #b8d9c5;
     border-radius: 12px;
 }
-
 QTabBar::tab {
     background-color: transparent;
     color: #6b8f77;
@@ -986,17 +948,12 @@ QTabBar::tab {
     font-size: 13px;
     border-bottom: 2px solid transparent;
 }
-
 QTabBar::tab:selected {
     color: #2e9e62;
     border-bottom: 2px solid #2e9e62;
     font-weight: bold;
 }
-
-QTabBar::tab:hover {
-    color: #2e9e62;
-}
-
+QTabBar::tab:hover { color: #2e9e62; }
 QTextEdit#texto_diario {
     background-color: #ffffff;
     border: none;
@@ -1004,9 +961,7 @@ QTextEdit#texto_diario {
     font-size: 13px;
     color: #2d4a38;
     padding: 12px;
-    line-height: 1.6;
 }
-
 QPushButton#btn_icon {
     background-color: transparent;
     border: 1px solid #b8d9c5;
@@ -1015,11 +970,16 @@ QPushButton#btn_icon {
     font-size: 16px;
     font-weight: bold;
 }
-
-QPushButton#btn_icon:hover {
-    background-color: #e8f7ef;
+QPushButton#btn_icon:hover { background-color: #e8f7ef; }
+QPushButton#btn_logout {
+    background-color: transparent;
+    color: #c0392b;
+    border: 1.5px solid #c0392b;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
 }
-
+QPushButton#btn_logout:hover { background-color: #fdf0ee; }
 QDateEdit {
     background-color: #ffffff;
     border: 1.5px solid #b8d9c5;
@@ -1028,25 +988,6 @@ QDateEdit {
     font-size: 12px;
     color: #1a2e22;
 }
-
-QDateEdit:focus {
-    border-color: #2e9e62;
-}
-
-QDateEdit::drop-down {
-    border: none;
-    width: 20px;
-}
-
-QCalendarWidget {
-    background-color: #ffffff;
-    border: 1px solid #b8d9c5;
-    border-radius: 8px;
-}
-
-QCalendarWidget QAbstractItemView {
-    selection-background-color: #2e9e62;
-    selection-color: white;
-}
-
+QDateEdit:focus { border-color: #2e9e62; }
+QDateEdit::drop-down { border: none; width: 20px; }
 """

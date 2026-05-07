@@ -22,8 +22,14 @@ from .utils import verificar_logros
 from django.shortcuts import render, redirect, get_object_or_404
 #formularios
 from .forms import EmocionForm
-
+import requests as http_requests
+from django.contrib.auth import login as django_login
 User = get_user_model()
+
+# ════════════════════════════════════════════════════════════
+# CONFIGURACIÓN FASTAPI
+# ════════════════════════════════════════════════════════════
+FASTAPI_URL = "http://127.0.0.1:8001"
 
 
 def guardar_logros_sesion(request, nuevos_logros):
@@ -34,116 +40,121 @@ def guardar_logros_sesion(request, nuevos_logros):
         ]
 
 
-# ==================================================
-# REGISTRO
-# ==================================================
-def registro_view(request):
-    if request.method == "POST":
-        nombre = request.POST.get("nombre")
-        apellido = request.POST.get("apellido")
-        email = request.POST.get("email")
-        password1 = request.POST.get("password")
-        password2 = request.POST.get("password2")
-        genero = request.POST.get("genero")
-        fecha_nacimiento = request.POST.get("fecha_nacimiento")
-
-        if not email.endswith("@duocuc.cl"):
-            messages.error(request, "Debes usar tu correo institucional @duocuc.cl")
-            return render(request, "registro.html", locals())
-
-        if User.objects.filter(email=email).exists():
-            messages.error(request, "Este correo ya está registrado")
-            return render(request, "registro.html", locals())
-
-        if password1 != password2:
-            messages.error(request, "Las contraseñas no coinciden")
-            return render(request, "registro.html", locals())
-
-        if len(password1) < 8:
-            messages.error(request, "La contraseña debe tener al menos 8 caracteres")
-            return render(request, "registro.html", locals())
-        if not re.search(r"[A-Z]", password1):
-            messages.error(request, "La contraseña debe tener al menos una letra mayúscula")
-            return render(request, "registro.html", locals())
-        if not re.search(r"[a-z]", password1):
-            messages.error(request, "La contraseña debe tener al menos una letra minúscula")
-            return render(request, "registro.html", locals())
-        if not re.search(r"[0-9]", password1):
-            messages.error(request, "La contraseña debe tener al menos un número")
-            return render(request, "registro.html", locals())
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password1):
-            messages.error(request, "La contraseña debe tener al menos un carácter especial (!@#$...)")
-            return render(request, "registro.html", locals())
-
-        if genero not in ["F", "M", "O"]:
-            messages.error(request, "Debes seleccionar un género válido")
-            return render(request, "registro.html", locals())
-
-        try:
-            fecha_nac = date.fromisoformat(fecha_nacimiento)
-        except ValueError:
-            messages.error(request, "Fecha de nacimiento inválida")
-            return render(request, "registro.html", locals())
-
-        hoy = date.today()
-        edad = hoy.year - fecha_nac.year - ((hoy.month, hoy.day) < (fecha_nac.month, fecha_nac.day))
-
-        if fecha_nac.year < 1920:
-            messages.error(request, "Fecha de nacimiento no válida")
-            return render(request, "registro.html", locals())
-
-        if edad < 18:
-            messages.error(request, "Debes ser mayor de 18 años")
-            return render(request, "registro.html", locals())
-
-        user = User.objects.create_user(
-            email=email,
-            password=password1,
-            first_name=nombre,
-            last_name=apellido
-        )
-
-        Perfil.objects.create(
-            usuario=user,
-            nombre=nombre,
-            apellido=apellido,
-            genero=genero,
-            fecha_nacimiento=fecha_nac
-        )
-
-        messages.success(request, "Usuario registrado correctamente")
-        return redirect("login")
-
-    return render(request, "registro.html")
+# ════════════════════════════════════════════════════════════
+# LOGIN — autentica contra FastAPI, guarda datos en sesión
+# ════════════════════════════════════════════════════════════
 
 
-# ==================================================
-# LOGIN
-# ==================================================
 def login_view(request):
     if request.method == "POST":
-        email    = request.POST.get("email")
-        password = request.POST.get("password")
+        correo = request.POST.get("email", "").strip()
+        password = request.POST.get("password", "")
 
-        user = authenticate(request, email=email, password=password)
-
-        if user is not None:
-            login(request, user)
-            return redirect("dashboard")
-        else:
-            # ← render en vez de redirect para que el mensaje no se pierda
+        try:
+            response = http_requests.post(
+                f"{FASTAPI_URL}/students/login",
+                json={"correo": correo, "password": password},
+                timeout=8
+            )
+        except Exception:
             return render(request, "login.html", {
-                "error": "Correo o contraseña incorrectos.",
-                "email": email  # para no borrar el email que escribió
+                "error": "Error de conexión"
             })
 
-    return render(request, "login.html")
+        if response.status_code != 200:
+            return render(request, "login.html", {
+                "error": "Credenciales inválidas"
+            })
+
+        data = response.json()
+
+        user = Usuario.objects.get(id=data["student_id"])
+        login(request, user)
+        request.session["student_id"] = data["student_id"]
+
+        if data.get("debe_cambiar_password"):
+            return redirect("cambiar_password")
+
+        return redirect("dashboard")
+
+    return render(request, "login.html")  # 👈 esto faltaba
+ 
+ 
+# ════════════════════════════════════════════════════════════
+# CAMBIAR CONTRASEÑA TEMPORAL
+# Obligatorio la primera vez que el estudiante inicia sesión
+# ════════════════════════════════════════════════════════════
+# views.py
+def cambiar_password_view(request):
+    if not request.session.get("student_id"):
+        return redirect("login")
+
+    if request.method == "POST":
+        nueva     = request.POST.get("nueva_password", "")
+        confirmar = request.POST.get("confirmar_password", "")
+
+        if nueva != confirmar:
+            return render(request, "cambiar_password.html", {"error": "Las contraseñas no coinciden"})
+        if len(nueva) < 6:
+            return render(request, "cambiar_password.html", {"error": "Mínimo 6 caracteres"})
+
+        student_id = request.session["student_id"]
+
+        try:
+            response = http_requests.put(
+                f"{FASTAPI_URL}/students/{student_id}/change-password",
+                json={"nueva_password": nueva},
+                timeout=8
+            )
+        except Exception:
+            return render(request, "cambiar_password.html", {"error": "Error de conexión"})
+
+        if response.status_code != 200:
+            return render(request, "cambiar_password.html", {"error": "Error al cambiar contraseña"})
+
+        # ✅ Volver a loguear al usuario en Django para restaurar la sesión
+        user = Usuario.objects.get(id=student_id)
+        login(request, user)
+        request.session["student_id"] = student_id
+
+        return redirect("dashboard")
+
+    return render(request, "cambiar_password.html")
+ 
+ 
+# ════════════════════════════════════════════════════════════
+# LOGOUT
+# ════════════════════════════════════════════════════════════
+def logout_view(request):
+    request.session.flush()
+    return redirect("login")
+ 
+ 
+# ════════════════════════════════════════════════════════════
+# DECORADOR: requiere sesión FastAPI activa
+# Reemplaza @login_required de Django en tus vistas de alumnos
+# ════════════════════════════════════════════════════════════
+from functools import wraps
+ 
+def student_required(view_func):
+    """
+    Decorador equivalente a @login_required pero para la sesión de FastAPI.
+    Úsalo en todas las vistas que requieran que el estudiante esté autenticado.
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.session.get("student_id"):
+            return redirect("login")
+        if request.session.get("debe_cambiar_password"):
+            return redirect("cambiar_password")
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 # ==================================================
 # DASHBOARD
 # ==================================================
-@login_required
+@student_required
 def dashboard_view(request):
     emociones = Emocion.objects.all()
 
@@ -197,7 +208,7 @@ def dashboard_view(request):
         "habitos_hoy": habitos_hoy,
     })
 
-@login_required
+@student_required
 def lista_emociones(request):
     emociones = Emocion.objects.all()
     return render(request, "lista_emociones.html", {"emociones": emociones})
@@ -238,7 +249,7 @@ def eliminar_emocion(request, id):
 # ==================================================
 # HÁBITOS
 # ==================================================
-@login_required
+@student_required
 def registro_habitos(request):
     from datetime import timedelta
     habitos = Habito.objects.select_related("tipo").all()
@@ -322,7 +333,7 @@ def registro_habitos(request):
 import os
 import anthropic
 
-@login_required
+@student_required
 def recomendaciones_habitos(request):
     """Vista que genera recomendaciones personalizadas con Claude."""
     from django.http import JsonResponse
@@ -402,7 +413,7 @@ def recomendaciones_habitos(request):
 # ==================================================
 # ESTADÍSTICAS
 # ==================================================
-@login_required
+@student_required
 def estadistica_view(request):
     from datetime import timedelta
     from django.db.models import Avg, Count
@@ -460,7 +471,7 @@ def estadistica_view(request):
 # ==================================================
 # RECURSOS
 # ==================================================
-@login_required
+@student_required
 def recursos_view(request):
     return render(request, "recursos.html")
 
@@ -468,7 +479,7 @@ def recursos_view(request):
 # ==================================================
 # DIARIO
 # ==================================================
-@login_required
+@student_required
 def diario(request):
     if request.method == 'POST':
         texto = request.POST.get('contenido')
@@ -488,7 +499,7 @@ def diario(request):
     entradas = Diario.objects.filter(usuario=request.user).order_by('-fecha')
     return render(request, 'diario.html', {"entradas": entradas})
 
-@login_required
+@student_required
 def diario_editar(request, pk):
     entrada = get_object_or_404(Diario, pk=pk, usuario=request.user)
     if request.method == 'POST':
@@ -499,7 +510,7 @@ def diario_editar(request, pk):
             messages.success(request, "¡Entrada actualizada! ✏️", extra_tags='diario')
     return redirect('diario')
 
-@login_required
+@student_required
 def diario_eliminar(request, pk):
     entrada = get_object_or_404(Diario, pk=pk, usuario=request.user)
     if request.method == 'POST':
@@ -510,7 +521,7 @@ def diario_eliminar(request, pk):
 # ==================================================
 # PERFIL
 # ==================================================
-@login_required
+@student_required
 def perfil(request):
     perfil_obj = Perfil.objects.get(usuario=request.user)
 
@@ -547,7 +558,7 @@ def perfil(request):
 # ==================================================
 # LOGROS
 # ==================================================
-@login_required
+@student_required
 def logros_view(request):
     todos = Logro.objects.all()
     obtenidos = LogroUsuario.objects.filter(
@@ -596,7 +607,6 @@ def limpiar_logros_sesion(request):
 
 # ==================================================
 # VISTAS API PARA APP DE ESCRITORIO
-# Agrega esto al FINAL de tu views.py existente
 # ==================================================
 from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAdminUser
@@ -654,6 +664,7 @@ class AlumnoPerfilView(generics.RetrieveAPIView):
     def get_object(self):
         return generics.get_object_or_404(Perfil, usuario__id=self.kwargs['pk'])
 
+from rest_framework.permissions import AllowAny
 
 class AlumnoEmocionesView(generics.ListAPIView):
     """
@@ -661,7 +672,7 @@ class AlumnoEmocionesView(generics.ListAPIView):
     Devuelve el historial de emociones de un alumno.
     """
     serializer_class = RegistroEmocionSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return RegistroEmocion.objects.filter(
@@ -675,7 +686,7 @@ class AlumnoHabitosView(generics.ListAPIView):
     Devuelve el historial de hábitos de un alumno.
     """
     serializer_class = RegistroHabitoSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return RegistroHabito.objects.filter(
@@ -689,7 +700,7 @@ class AlumnoDiarioView(generics.ListAPIView):
     Devuelve las entradas del diario de un alumno.
     """
     serializer_class = DiarioSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return Diario.objects.filter(
@@ -701,7 +712,7 @@ class AlumnoDiarioView(generics.ListAPIView):
 # Agrega esto en tu views.py
 # ==================================================
 
-@login_required
+@student_required
 def mensajes_view(request):
     from .models import NotaPsicologo
     notas = NotaPsicologo.objects.filter(
@@ -764,7 +775,7 @@ class AlumnoPerfilView(generics.RetrieveAPIView):
 
 class AlumnoEmocionesView(generics.ListAPIView):
     serializer_class = RegistroEmocionSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return RegistroEmocion.objects.filter(
